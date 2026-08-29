@@ -2,58 +2,61 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLocale } from "./locale-provider";
+import type { TranslationKey } from "@/lib/i18n";
 
 /**
  * Admin navigation. Links are filtered by the permissions passed in from the
  * server — hiding a link is convenience only; every route re-checks server-side.
  */
-const GROUPS: { group: string; items: { href: string; label: string; permission: string }[] }[] = [
+const GROUPS: { group: TranslationKey; items: { href: string; label: TranslationKey; permission: string }[] }[] = [
   {
-    group: "Overview",
+    group: "adm.overview",
     items: [
-      { href: "/admin", label: "Dashboard", permission: "analytics.view" },
-      { href: "/admin/analytics", label: "Analytics", permission: "analytics.view" },
+      { href: "/admin", label: "adm.dashboard", permission: "analytics.view" },
+      { href: "/admin/analytics", label: "adm.analytics", permission: "analytics.view" },
     ],
   },
   {
-    group: "Citizen issues",
+    group: "adm.issuesGroup",
     items: [
-      { href: "/admin/complaints", label: "Issue queue", permission: "complaint.view.assigned" },
+      { href: "/admin/complaints", label: "adm.issueQueue", permission: "complaint.view.assigned" },
     ],
   },
   {
-    group: "Election data",
+    group: "adm.electionGroup",
     items: [
-      { href: "/admin/candidates", label: "Candidates", permission: "candidate.edit" },
-      { href: "/admin/claims", label: "Profile claims", permission: "candidate.claim.review" },
-      { href: "/admin/elections", label: "Elections", permission: "election.manage" },
-      { href: "/admin/results", label: "Results", permission: "result.manage" },
+      { href: "/admin/candidates", label: "adm.candidates", permission: "candidate.edit" },
+      { href: "/admin/claims", label: "adm.claims", permission: "candidate.claim.review" },
+      { href: "/admin/elections", label: "adm.elections", permission: "election.manage" },
+      { href: "/admin/results", label: "adm.results", permission: "result.manage" },
     ],
   },
   {
-    group: "Content",
+    group: "adm.contentGroup",
     items: [
-      { href: "/admin/news", label: "News", permission: "news.edit" },
-      { href: "/admin/fact-checks", label: "Fact checks", permission: "factcheck.review" },
-      { href: "/admin/promises", label: "Promises", permission: "promise.manage" },
-      { href: "/admin/polls", label: "Polls", permission: "poll.manage" },
-      { href: "/admin/ratings", label: "Rating moderation", permission: "rating.moderate" },
+      { href: "/admin/news", label: "adm.news", permission: "news.edit" },
+      { href: "/admin/fact-checks", label: "adm.factChecks", permission: "factcheck.review" },
+      { href: "/admin/promises", label: "adm.promises", permission: "promise.manage" },
+      { href: "/admin/polls", label: "adm.polls", permission: "poll.manage" },
+      { href: "/admin/ratings", label: "adm.ratings", permission: "rating.moderate" },
     ],
   },
   {
-    group: "Administration",
+    group: "adm.adminGroup",
     items: [
-      { href: "/admin/users", label: "Users", permission: "user.view" },
-      { href: "/admin/roles", label: "Roles & permissions", permission: "role.manage" },
-      { href: "/admin/notifications", label: "Email & notifications", permission: "settings.manage" },
-      { href: "/admin/audit", label: "Audit log", permission: "audit.view.all" },
-      { href: "/admin/settings", label: "System settings", permission: "settings.manage" },
+      { href: "/admin/users", label: "adm.users", permission: "user.view" },
+      { href: "/admin/roles", label: "adm.roles", permission: "role.manage" },
+      { href: "/admin/notifications", label: "adm.notifications", permission: "settings.manage" },
+      { href: "/admin/audit", label: "adm.audit", permission: "audit.view.all" },
+      { href: "/admin/settings", label: "adm.settings", permission: "settings.manage" },
     ],
   },
 ];
 
 export function AdminSidebar({ permissions }: { permissions: string[] }) {
   const pathname = usePathname();
+  const { t } = useLocale();
   const allowed = new Set(permissions);
 
   return (
@@ -63,7 +66,7 @@ export function AdminSidebar({ permissions }: { permissions: string[] }) {
         if (items.length === 0) return null;
         return (
           <div key={group.group} style={{ width: "100%" }}>
-            <div className="group">{group.group}</div>
+            <div className="group">{t(group.group)}</div>
             {items.map((item) => (
               <Link
                 key={item.href}
@@ -78,7 +81,7 @@ export function AdminSidebar({ permissions }: { permissions: string[] }) {
                       : ""
                 }
               >
-                {item.label}
+                {t(item.label)}
               </Link>
             ))}
           </div>

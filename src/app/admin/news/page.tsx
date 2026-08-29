@@ -7,11 +7,13 @@ import { Card, EmptyState, Stat } from "@/components/ui";
 import { ContentBadge } from "@/components/status";
 import { NewsWorkflowForm } from "@/components/admin-forms";
 import { formatDateTime } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "News" };
 
 export default async function AdminNewsPage() {
   const actor = await requireActorPage("/admin/news");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "news.edit"))) redirect("/admin");
   const canEdit = await can({ userId: actor.userId, role: actor.role }, "news.edit");
   const canPublish = await can({ userId: actor.userId, role: actor.role }, "news.publish");
@@ -30,32 +32,32 @@ export default async function AdminNewsPage() {
 
   return (
     <>
-      <h1>News</h1>
+      <h1>{t("adm.news")}</h1>
       <p className="muted">
         Draft → editorial review → source review → approval → publish. Editing a published article
         requires a correction summary, which is preserved in the public revision history.
       </p>
 
       <div className="grid grid-4">
-        <Stat label="Total articles" value={articles.length} />
+        <Stat label={t("adm.total")} value={articles.length} />
         <Stat
-          label="Published"
+          label={t("adm.published")}
           value={counts.find((r) => r.status === "PUBLISHED")?._count._all ?? 0}
           accent="green"
         />
         <Stat
-          label="In review"
+          label={t("adm.contentInReview")}
           value={counts
             .filter((r) => r.status === "EDITORIAL_REVIEW" || r.status === "SOURCE_REVIEW")
             .reduce((sum, r) => sum + r._count._all, 0)}
           accent="orange"
         />
-        <Stat label="Drafts" value={counts.find((r) => r.status === "DRAFT")?._count._all ?? 0} />
+        <Stat label={t("adm.drafts")} value={counts.find((r) => r.status === "DRAFT")?._count._all ?? 0} />
       </div>
 
       {articles.length === 0 ? (
         <Card className="section-tight">
-          <EmptyState title="No articles yet" />
+          <EmptyState title={t("adm.noMatch")} />
         </Card>
       ) : (
         <div className="stack" style={{ marginTop: "1rem" }}>

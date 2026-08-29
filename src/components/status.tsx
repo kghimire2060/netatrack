@@ -1,6 +1,9 @@
+"use client";
+
 import type { ComplaintStatus, ContentStatus, FactCheckVerdict, PromiseStatus, VerificationStatus, ElectionStatus, ClaimStatus, AccountStatus, IssueStatus, GovernmentLevel } from "@prisma/client";
 import { Badge, type Tone } from "./ui";
-import { humanize } from "@/lib/format";
+import { enumLabel } from "@/lib/i18n";
+import { useLocale } from "./locale-provider";
 
 const COMPLAINT_TONE: Record<ComplaintStatus, Tone> = {
   SUBMITTED: "info",
@@ -70,30 +73,38 @@ const ACCOUNT_TONE: Record<AccountStatus, Tone> = {
   DELETED: "muted",
 };
 
-export const ComplaintBadge = ({ status }: { status: ComplaintStatus }) => (
-  <Badge tone={COMPLAINT_TONE[status]}>{humanize(status)}</Badge>
-);
-export const PromiseBadge = ({ status }: { status: PromiseStatus }) => (
-  <Badge tone={PROMISE_TONE[status]}>{humanize(status)}</Badge>
-);
-export const VerdictBadge = ({ verdict }: { verdict: FactCheckVerdict }) => (
-  <Badge tone={VERDICT_TONE[verdict]}>{humanize(verdict)}</Badge>
-);
-export const VerificationBadge = ({ status }: { status: VerificationStatus }) => (
-  <Badge tone={VERIFICATION_TONE[status]}>{humanize(status)}</Badge>
-);
-export const ElectionBadge = ({ status }: { status: ElectionStatus }) => (
-  <Badge tone={ELECTION_TONE[status]}>{humanize(status)}</Badge>
-);
-export const ContentBadge = ({ status }: { status: ContentStatus }) => (
-  <Badge tone={CONTENT_TONE[status]}>{humanize(status)}</Badge>
-);
-export const ClaimBadge = ({ status }: { status: ClaimStatus }) => (
-  <Badge tone={CLAIM_TONE[status]}>{humanize(status)}</Badge>
-);
-export const AccountBadge = ({ status }: { status: AccountStatus }) => (
-  <Badge tone={ACCOUNT_TONE[status]}>{humanize(status)}</Badge>
-);
+export const ComplaintBadge = ({ status }: { status: ComplaintStatus }) => {
+  const { locale } = useLocale();
+  return <Badge tone={COMPLAINT_TONE[status]}>{enumLabel(status, locale)}</Badge>;
+};
+export const PromiseBadge = ({ status }: { status: PromiseStatus }) => {
+  const { locale } = useLocale();
+  return <Badge tone={PROMISE_TONE[status]}>{enumLabel(status, locale)}</Badge>;
+};
+export const VerdictBadge = ({ verdict }: { verdict: FactCheckVerdict }) => {
+  const { locale } = useLocale();
+  return <Badge tone={VERDICT_TONE[verdict]}>{enumLabel(verdict, locale)}</Badge>;
+};
+export const VerificationBadge = ({ status }: { status: VerificationStatus }) => {
+  const { locale } = useLocale();
+  return <Badge tone={VERIFICATION_TONE[status]}>{enumLabel(status, locale)}</Badge>;
+};
+export const ElectionBadge = ({ status }: { status: ElectionStatus }) => {
+  const { locale } = useLocale();
+  return <Badge tone={ELECTION_TONE[status]}>{enumLabel(status, locale)}</Badge>;
+};
+export const ContentBadge = ({ status }: { status: ContentStatus }) => {
+  const { locale } = useLocale();
+  return <Badge tone={CONTENT_TONE[status]}>{enumLabel(status, locale)}</Badge>;
+};
+export const ClaimBadge = ({ status }: { status: ClaimStatus }) => {
+  const { locale } = useLocale();
+  return <Badge tone={CLAIM_TONE[status]}>{enumLabel(status, locale)}</Badge>;
+};
+export const AccountBadge = ({ status }: { status: AccountStatus }) => {
+  const { locale } = useLocale();
+  return <Badge tone={ACCOUNT_TONE[status]}>{enumLabel(status, locale)}</Badge>;
+};
 
 const ISSUE_TONE: Record<IssueStatus, Tone> = {
   RAISED: "muted",
@@ -108,11 +119,13 @@ const LEVEL_TONE: Record<GovernmentLevel, Tone> = {
   LOCAL: "muted",
 };
 
-export const IssueBadge = ({ status }: { status: IssueStatus }) => (
-  <Badge tone={ISSUE_TONE[status]}>{humanize(status)}</Badge>
-);
-export const LevelBadge = ({ level }: { level: GovernmentLevel }) => (
-  <Badge tone={LEVEL_TONE[level]}>{humanize(level)}</Badge>
-);
+export const IssueBadge = ({ status }: { status: IssueStatus }) => {
+  const { locale } = useLocale();
+  return <Badge tone={ISSUE_TONE[status]}>{enumLabel(status, locale)}</Badge>;
+};
+export const LevelBadge = ({ level }: { level: GovernmentLevel }) => {
+  const { locale } = useLocale();
+  return <Badge tone={LEVEL_TONE[level]}>{enumLabel(level, locale)}</Badge>;
+};
 
 export { COMPLAINT_TONE };

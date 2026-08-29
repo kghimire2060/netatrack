@@ -4,12 +4,15 @@ import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Card, EmptyState, Meter, Stat } from "@/components/ui";
 import { formatNumber, humanize } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
+import { enumLabel } from "@/lib/i18n";
 
 export const metadata = { title: "Analytics" };
 
 /** Operational analytics for staff and administrators (section 14, 15). */
 export default async function AdminAnalyticsPage() {
   const actor = await requireActorPage("/admin/analytics");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "analytics.view"))) redirect("/admin");
 
   const [
@@ -68,15 +71,15 @@ export default async function AdminAnalyticsPage() {
 
   return (
     <>
-      <h1>Operational analytics</h1>
+      <h1>{t("adm.analytics")}</h1>
       <p className="muted">
         Queue health, response performance and platform activity. Figures are aggregates; no citizen
         is identifiable here.
       </p>
 
       <div className="grid grid-4">
-        <Stat label="Issues total" value={formatNumber(total)} />
-        <Stat label="Overdue now" value={overdue} accent={overdue > 0 ? "red" : undefined} />
+        <Stat label={t("adm.issue")} value={formatNumber(total)} />
+        <Stat label={t("adm.overdue")} value={overdue} accent={overdue > 0 ? "red" : undefined} />
         <Stat
           label="Mean hours to verify"
           value={mean(verifyTimes) ?? "—"}
@@ -89,7 +92,7 @@ export default async function AdminAnalyticsPage() {
         <Card title="Queue by status">
           {byStatus.map((row) => (
             <div className="bar-row" key={row.status} style={{ marginBottom: ".4rem" }}>
-              <span className="small">{humanize(row.status)}</span>
+              <span className="small">{enumLabel(row.status, locale)}</span>
               <Meter
                 value={row._count._all}
                 max={total || 1}
@@ -134,7 +137,7 @@ export default async function AdminAnalyticsPage() {
         <Card title="Accounts by role">
           {userGrowth.map((row) => (
             <div className="bar-row" key={row.role} style={{ marginBottom: ".4rem" }}>
-              <span className="small">{humanize(row.role)}</span>
+              <span className="small">{enumLabel(row.role, locale)}</span>
               <Meter
                 value={row._count._all}
                 max={Math.max(1, ...userGrowth.map((item) => item._count._all))}

@@ -7,6 +7,8 @@ import { AccountBadge } from "@/components/status";
 import { UserAdminForm } from "@/components/admin-forms";
 import { formatDate, formatDateTime, humanize } from "@/lib/format";
 import type { Prisma } from "@prisma/client";
+import { getTranslator } from "@/lib/locale-server";
+import { enumLabel } from "@/lib/i18n";
 
 export const metadata = { title: "Users" };
 
@@ -19,6 +21,7 @@ export default async function AdminUsersPage({
   searchParams: Promise<{ q?: string; role?: string; status?: string; page?: string }>;
 }) {
   const actor = await requireActorPage("/admin/users");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "user.view"))) redirect("/admin");
 
   const canEdit = await can({ userId: actor.userId, role: actor.role }, "user.edit");
@@ -72,23 +75,23 @@ export default async function AdminUsersPage({
 
   return (
     <>
-      <h1>Users</h1>
+      <h1>{t("adm.users")}</h1>
       <p className="muted">
         Account status, role assignment and researcher approval. Every change is written to the
         audit log with the actor and reason.
       </p>
 
       <div className="grid grid-4">
-        <Stat label="Total accounts" value={total} />
-        <Stat label="Pending verification" value={pendingCount} accent="orange" />
+        <Stat label={t("adm.totalAccounts")} value={total} />
+        <Stat label={t("adm.pending")} value={pendingCount} accent="orange" />
         <Stat
-          label="Staff and admins"
+          label={t("adm.staffAndAdmins")}
           value={byRole
             .filter((row) => ["STAFF", "ADMIN", "SUPER_ADMIN"].includes(row.role))
             .reduce((sum, row) => sum + row._count._all, 0)}
         />
         <Stat
-          label="Researchers"
+          label={t("adm.researchers")}
           value={byRole.find((row) => row.role === "RESEARCHER")?._count._all ?? 0}
           accent="purple"
         />
@@ -96,30 +99,30 @@ export default async function AdminUsersPage({
 
       <Card className="section-tight">
         <form method="get" className="row" style={{ gap: ".6rem" }}>
-          <input name="q" defaultValue={params.q ?? ""} placeholder="Name or email" className="grow" />
+          <input name="q" defaultValue={params.q ?? ""} placeholder={t("cand.searchPlaceholder")} className="grow" />
           <select name="role" defaultValue={params.role ?? ""} aria-label="Role">
-            <option value="">All roles</option>
+            <option value="">{t("adm.allRoles")}</option>
             {ROLES.map((role) => (
               <option key={role} value={role}>
-                {humanize(role)}
+                {enumLabel(role, locale)}
               </option>
             ))}
           </select>
           <select name="status" defaultValue={params.status ?? ""} aria-label="Status">
-            <option value="">All statuses</option>
+            <option value="">{t("adm.allStatuses")}</option>
             {["PENDING", "ACTIVE", "SUSPENDED", "LOCKED", "DELETED"].map((status) => (
               <option key={status} value={status}>
-                {humanize(status)}
+                {enumLabel(status, locale)}
               </option>
             ))}
           </select>
-          <button className="btn btn-sm">Filter</button>
+          <button className="btn btn-sm">{t("common.filter")}</button>
         </form>
       </Card>
 
       {users.length === 0 ? (
         <Card className="section-tight">
-          <EmptyState title="No users match those filters" />
+          <EmptyState title={t("adm.noMatch")} />
         </Card>
       ) : (
         <div className="stack" style={{ marginTop: "1rem" }}>
@@ -130,7 +133,7 @@ export default async function AdminUsersPage({
                   <div className="row" style={{ gap: ".5rem" }}>
                     <strong>{user.fullName}</strong>
                     <AccountBadge status={user.status} />
-                    <span className="badge badge-navy">{humanize(user.role)}</span>
+                    <span className="badge badge-navy">{enumLabel(user.role, locale)}</span>
                     {user.mfaEnabled ? <span className="badge badge-good">MFA</span> : null}
                     {!user.emailVerified ? (
                       <span className="badge badge-warn">Email unverified</span>

@@ -7,11 +7,13 @@ import { Card, EmptyState, Stat } from "@/components/ui";
 import { PromiseBadge } from "@/components/status";
 import { PromiseUpdateForm } from "@/components/admin-forms";
 import { formatDateTime } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Promises" };
 
 export default async function AdminPromisesPage() {
   const actor = await requireActorPage("/admin/promises");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "promise.manage"))) redirect("/admin");
   const canManage = await can({ userId: actor.userId, role: actor.role }, "promise.manage");
 
@@ -36,30 +38,30 @@ export default async function AdminPromisesPage() {
 
   return (
     <>
-      <h1>Manifesto promises</h1>
+      <h1>{t("adm.promises")}</h1>
       <p className="muted">
         Every status change writes a dated update record. A promise cannot be marked completed
         without an evidence link.
       </p>
 
       <div className="grid grid-4">
-        <Stat label="Promises" value={promises.length} />
+        <Stat label={t("prom.tracked")} value={promises.length} />
         <Stat
-          label="Completed"
+          label={t("prom.completed")}
           value={counts.find((r) => r.status === "COMPLETED")?._count._all ?? 0}
           accent="green"
         />
         <Stat
-          label="Delayed"
+          label={t("prom.delayed")}
           value={counts.find((r) => r.status === "DELAYED")?._count._all ?? 0}
           accent="red"
         />
-        <Stat label="Stale (90+ days)" value={stale} accent="orange" />
+        <Stat label={t("adm.needsAttention")} value={stale} accent="orange" />
       </div>
 
       {promises.length === 0 ? (
         <Card className="section-tight">
-          <EmptyState title="No promises recorded" />
+          <EmptyState title={t("adm.noMatch")} />
         </Card>
       ) : (
         <div className="stack" style={{ marginTop: "1rem" }}>

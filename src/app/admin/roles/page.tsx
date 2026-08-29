@@ -6,6 +6,8 @@ import { Card } from "@/components/ui";
 import { RolePermissionEditor } from "@/components/admin-forms";
 import { PERMISSIONS, SUPER_ADMIN_ONLY, type RoleName } from "@/lib/permissions";
 import { humanize } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
+import { enumLabel } from "@/lib/i18n";
 
 export const metadata = { title: "Roles and permissions" };
 
@@ -13,6 +15,7 @@ const ROLES: RoleName[] = ["SUPER_ADMIN", "ADMIN", "STAFF", "CITIZEN", "CANDIDAT
 
 export default async function AdminRolesPage() {
   const actor = await requireActorPage("/admin/roles");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "role.manage"))) redirect("/admin");
 
   const granted = await Promise.all(
@@ -24,7 +27,7 @@ export default async function AdminRolesPage() {
 
   return (
     <>
-      <h1>Roles and permissions</h1>
+      <h1>{t("adm.roles")}</h1>
       <p className="muted">
         Authorization is enforced on the server for every action. Changes here take effect
         immediately and are recorded in the audit log.
@@ -40,7 +43,7 @@ export default async function AdminRolesPage() {
         {granted.map(({ role, permissions }) => (
           <Card
             key={role}
-            title={`${humanize(role)} — ${permissions.length} permissions`}
+            title={`${enumLabel(role, locale)} — ${permissions.length}`}
             action={
               <span className="small faint">
                 {counts.find((row) => row.role === role)?._count._all ?? 0} accounts

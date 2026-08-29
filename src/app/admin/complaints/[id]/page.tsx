@@ -9,6 +9,8 @@ import { ComplaintActionPanel } from "@/components/admin-forms";
 import { allowedTransitions, permissionForTransition, STATUS_TONE } from "@/lib/complaint-workflow";
 import { formatDateTime, humanize, relativeTime } from "@/lib/format";
 import type { Permission } from "@/lib/permissions";
+import { getTranslator } from "@/lib/locale-server";
+import { enumLabel } from "@/lib/i18n";
 
 export const metadata = { title: "Issue detail" };
 
@@ -18,6 +20,7 @@ export default async function AdminComplaintDetail({
   params: Promise<{ id: string }>;
 }) {
   const actor = await requireActorPage("/admin/complaints");
+  const { t, locale } = await getTranslator();
   const { id } = await params;
 
   const complaint = await prisma.complaint.findUnique({
@@ -73,20 +76,20 @@ export default async function AdminComplaintDetail({
           <div className="row small muted">
             <ComplaintBadge status={complaint.status} />
             <Badge tone={complaint.priority === "URGENT" ? "bad" : "muted"}>
-              {humanize(complaint.priority)}
+              {enumLabel(complaint.priority, locale)}
             </Badge>
             <span>{complaint.category}</span>
             <span>Submitted {formatDateTime(complaint.createdAt)}</span>
           </div>
         </div>
         <Link className="btn btn-sm btn-ghost" href={`/track?id=${complaint.trackingId}`}>
-          View public page
+          {t("adm.viewPublicPage")}
         </Link>
       </div>
 
       <div className="grid grid-sidebar" style={{ marginTop: "1rem" }}>
         <div className="stack">
-          <Card title="Description">
+          <Card title={t("adm.description")}>
             <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{complaint.description}</p>
             {complaint.locationDetail ? (
               <p className="small muted" style={{ marginTop: ".6rem", marginBottom: 0 }}>
@@ -95,7 +98,7 @@ export default async function AdminComplaintDetail({
             ) : null}
           </Card>
 
-          <Card title="Take action">
+          <Card title={t("adm.takeAction")}>
             <ComplaintActionPanel
               complaintId={complaint.id}
               currentStatus={complaint.status}
@@ -106,20 +109,20 @@ export default async function AdminComplaintDetail({
             />
           </Card>
 
-          <Card title="Full timeline (internal)">
+          <Card title={t("adm.fullTimeline")}>
             <ul className="timeline">
               {complaint.events.map((event) => (
                 <li key={event.id} className={`is-${STATUS_TONE[event.status]}`}>
                   <div className="when">{formatDateTime(event.createdAt)}</div>
                   <div className="what">
-                    {humanize(event.status)}{" "}
+                    {enumLabel(event.status, locale)}{" "}
                     <span className="small faint">
                       · {event.actor?.fullName ?? event.actorLabel}
                     </span>
                     {event.isPublic ? (
-                      <Badge tone="good">Public</Badge>
+                      <Badge tone="good">{t("adm.public")}</Badge>
                     ) : (
-                      <Badge tone="muted">Internal</Badge>
+                      <Badge tone="muted">{t("adm.internal")}</Badge>
                     )}
                   </div>
                   {event.publicUpdate ? (
@@ -146,7 +149,7 @@ export default async function AdminComplaintDetail({
           </Card>
 
           {complaint.attachments.length > 0 ? (
-            <Card title="Evidence">
+            <Card title={t("adm.evidence")}>
               <ul className="small" style={{ paddingLeft: "1.1rem", margin: 0 }}>
                 {complaint.attachments.map((attachment) => (
                   <li key={attachment.id}>
@@ -166,31 +169,31 @@ export default async function AdminComplaintDetail({
         </div>
 
         <aside className="stack">
-          <Card title="Case detail">
+          <Card title={t("adm.caseDetail")}>
             <dl className="kv">
-              <dt>Reporter</dt>
+              <dt>{t("adm.reporter")}</dt>
               <dd>
                 {complaint.reporter ? (
                   complaint.reporter.fullName
                 ) : complaint.contactEmail ? (
                   <span className="faint">Anonymous (contact on file)</span>
                 ) : (
-                  <span className="faint">Anonymous</span>
+                  <span className="faint">{t("adm.anonymous")}</span>
                 )}
               </dd>
-              <dt>Assigned to</dt>
-              <dd>{complaint.assignedTo?.fullName ?? <span className="faint">Unassigned</span>}</dd>
-              <dt>Department</dt>
+              <dt>{t("adm.assignTo")}</dt>
+              <dd>{complaint.assignedTo?.fullName ?? <span className="faint">{t("adm.unassigned")}</span>}</dd>
+              <dt>{t("adm.department")}</dt>
               <dd>{complaint.department ?? "—"}</dd>
-              <dt>Verified by</dt>
+              <dt>{t("adm.verifiedBy")}</dt>
               <dd>{complaint.verifiedBy?.fullName ?? "—"}</dd>
-              <dt>Constituency</dt>
+              <dt>{t("con.title")}</dt>
               <dd>
                 {complaint.constituency
                   ? `${complaint.constituency.name}, ${complaint.constituency.district}`
                   : (complaint.district ?? "—")}
               </dd>
-              <dt>Next update due</dt>
+              <dt>{t("adm.nextUpdate")}</dt>
               <dd>
                 {complaint.expectedUpdateAt ? (
                   <span
@@ -208,13 +211,13 @@ export default async function AdminComplaintDetail({
                   "—"
                 )}
               </dd>
-              <dt>Last updated</dt>
+              <dt>{t("adm.lastUpdated")}</dt>
               <dd>{formatDateTime(complaint.updatedAt)}</dd>
             </dl>
           </Card>
 
           {complaint.internalNotes ? (
-            <Card title="Latest internal note">
+            <Card title={t("adm.internalNote")}>
               <p className="small" style={{ margin: 0 }}>
                 {complaint.internalNotes}
               </p>
@@ -222,7 +225,7 @@ export default async function AdminComplaintDetail({
           ) : null}
 
           {complaint.citizenFeedback || complaint.reopenRequested ? (
-            <Card title="Citizen feedback">
+            <Card title={t("adm.citizenFeedback")}>
               {complaint.reopenRequested ? (
                 <div className="alert alert-warn">
                   The citizen has requested that this issue be reopened.
@@ -240,8 +243,7 @@ export default async function AdminComplaintDetail({
           ) : null}
 
           <div className="notice notice-blue">
-            Only the <strong>public update</strong> field and the status appear on the citizen
-            tracking page. Internal notes never leave this screen.
+            {t("adm.internalOnlyNote")}
           </div>
         </aside>
       </div>

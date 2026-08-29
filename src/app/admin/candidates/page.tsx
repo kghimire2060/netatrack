@@ -8,6 +8,7 @@ import { VerificationBadge } from "@/components/status";
 import { CandidateVerifyForm } from "@/components/admin-forms";
 import { formatDate } from "@/lib/format";
 import type { Prisma, VerificationStatus } from "@prisma/client";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Candidates" };
 
@@ -19,6 +20,7 @@ export default async function AdminCandidatesPage({
   searchParams: Promise<{ q?: string; verification?: string; page?: string }>;
 }) {
   const actor = await requireActorPage("/admin/candidates");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "candidate.edit"))) redirect("/admin");
   const canVerify = await can({ userId: actor.userId, role: actor.role }, "candidate.verify");
 
@@ -52,7 +54,7 @@ export default async function AdminCandidatesPage({
 
   return (
     <>
-      <h1>Candidates</h1>
+      <h1>{t("adm.candidates")}</h1>
       <p className="muted">
         Editorial candidate records. Verification requires a recorded source; candidate accounts can
         never change a verification decision.
@@ -60,37 +62,37 @@ export default async function AdminCandidatesPage({
 
       <div className="grid grid-3">
         <Stat
-          label="Verified"
+          label={t("adm.verified")}
           value={counts.find((r) => r.verificationStatus === "VERIFIED")?._count._all ?? 0}
           accent="green"
         />
         <Stat
-          label="Pending"
+          label={t("adm.pending")}
           value={counts.find((r) => r.verificationStatus === "PENDING")?._count._all ?? 0}
           accent="orange"
         />
         <Stat
-          label="Rejected"
+          label={t("adm.rejected")}
           value={counts.find((r) => r.verificationStatus === "REJECTED")?._count._all ?? 0}
         />
       </div>
 
       <Card className="section-tight">
         <form method="get" className="row" style={{ gap: ".6rem" }}>
-          <input name="q" defaultValue={params.q ?? ""} placeholder="Candidate name" className="grow" />
+          <input name="q" defaultValue={params.q ?? ""} placeholder={t("cand.searchPlaceholder")} className="grow" />
           <select name="verification" defaultValue={params.verification ?? ""} aria-label="Verification">
-            <option value="">All statuses</option>
+            <option value="">{t("adm.allStatuses")}</option>
             <option value="PENDING">Pending</option>
             <option value="VERIFIED">Verified</option>
             <option value="REJECTED">Rejected</option>
           </select>
-          <button className="btn btn-sm">Filter</button>
+          <button className="btn btn-sm">{t("common.filter")}</button>
         </form>
       </Card>
 
       {candidates.length === 0 ? (
         <Card className="section-tight">
-          <EmptyState title="No candidates match those filters" />
+          <EmptyState title={t("adm.noMatch")} />
         </Card>
       ) : (
         <div className="stack" style={{ marginTop: "1rem" }}>

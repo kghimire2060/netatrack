@@ -6,11 +6,13 @@ import { smtpConfigured } from "@/lib/email";
 import { Badge, Card, EmptyState, Stat } from "@/components/ui";
 import { SmtpTestForm } from "@/components/admin-forms";
 import { formatDateTime } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Email and notifications" };
 
 export default async function AdminNotificationsPage() {
   const actor = await requireActorPage("/admin/notifications");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "settings.manage"))) redirect("/admin");
 
   const [counts, recent, byType] = await Promise.all([
@@ -37,7 +39,7 @@ export default async function AdminNotificationsPage() {
 
   return (
     <>
-      <h1>Email and notifications</h1>
+      <h1>{t("adm.notifications")}</h1>
       <p className="muted">
         Every transactional message is queued in the database first, then delivered. The delivery log
         records the outcome and error reason — never the recipient&apos;s message content.
@@ -54,20 +56,20 @@ export default async function AdminNotificationsPage() {
       ) : null}
 
       <div className="grid grid-4">
-        <Stat label="Queued" value={counts.find((r) => r.status === "QUEUED")?._count._all ?? 0} />
+        <Stat label={t("adm.queued")} value={counts.find((r) => r.status === "QUEUED")?._count._all ?? 0} />
         <Stat
-          label="Sent"
+          label={t("adm.sent")}
           value={counts.find((r) => r.status === "SENT")?._count._all ?? 0}
           accent="green"
         />
-        <Stat label="Failed" value={failed} accent={failed > 0 ? "red" : undefined} />
-        <Stat label="Message types" value={byType.length} accent="purple" />
+        <Stat label={t("adm.failed")} value={failed} accent={failed > 0 ? "red" : undefined} />
+        <Stat label={t("adm.messageTypes")} value={byType.length} accent="purple" />
       </div>
 
       <div className="grid grid-sidebar" style={{ marginTop: "1.2rem" }}>
-        <Card title="Delivery log">
+        <Card title={t("adm.deliveryLog")}>
           {recent.length === 0 ? (
-            <EmptyState title="No messages sent yet" />
+            <EmptyState title={t("adm.noMatch")} />
           ) : (
             <div className="table-wrap">
               <table className="data responsive">
@@ -121,11 +123,11 @@ export default async function AdminNotificationsPage() {
         </Card>
 
         <aside className="stack">
-          <Card title="Test send">
+          <Card title={t("adm.testSend")}>
             <SmtpTestForm defaultTo={actor.email} />
           </Card>
 
-          <Card title="Message types in use">
+          <Card title={t("adm.messageTypes")}>
             <ul className="small" style={{ paddingLeft: "1.1rem", margin: 0 }}>
               {byType
                 .sort((a, b) => b._count._all - a._count._all)

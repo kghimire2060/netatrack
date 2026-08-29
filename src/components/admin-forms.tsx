@@ -2,7 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { Field, FormError, FormSuccess, formValues, useApiForm } from "./form-kit";
-import { humanize } from "@/lib/format";
+import { enumLabel } from "@/lib/i18n";
+import { useLocale } from "./locale-provider";
 
 // ---------------------- complaint lifecycle action panel ---------------------
 
@@ -21,6 +22,7 @@ export function ComplaintActionPanel({
   assignedToId: string | null;
   department: string | null;
 }) {
+  const { locale, t } = useLocale();
   const [status, setStatus] = useState(transitions[0] ?? currentStatus);
   const form = useApiForm({
     url: `/api/admin/complaints/${complaintId}/transition`,
@@ -54,7 +56,7 @@ export function ComplaintActionPanel({
       <FormError error={form.error} issues={form.issues} />
       <FormSuccess message={form.success} />
 
-      <Field label="Move to status" name="status" required>
+      <Field label={t("adm.moveTo")} name="status" required>
         <select
           id="status"
           name="status"
@@ -63,7 +65,7 @@ export function ComplaintActionPanel({
         >
           {transitions.map((option) => (
             <option key={option} value={option}>
-              {humanize(option)}
+              {enumLabel(option, locale)}
             </option>
           ))}
         </select>
@@ -71,19 +73,19 @@ export function ComplaintActionPanel({
 
       {status === "ASSIGNED" ? (
         <>
-          <Field label="Assign to" name="assignedToId" required>
+          <Field label={t("adm.assignTo")} name="assignedToId" required>
             <select id="assignedToId" name="assignedToId" defaultValue={assignedToId ?? ""} required>
               <option value="" disabled>
                 Choose a staff member
               </option>
               {staff.map((member) => (
                 <option key={member.id} value={member.id}>
-                  {member.fullName} ({humanize(member.role)})
+                  {member.fullName} ({enumLabel(member.role, locale)})
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Department / team" name="department">
+          <Field label={t("adm.department")} name="department">
             <input id="department" name="department" defaultValue={department ?? ""} maxLength={120} />
           </Field>
         </>
@@ -91,7 +93,7 @@ export function ComplaintActionPanel({
 
       {status === "RESOLVED" ? (
         <Field
-          label="Resolution note"
+          label={t("adm.resolutionNote")}
           name="resolutionNote"
           required
           hint="Required. Attach resolution evidence as an attachment where available."
@@ -101,7 +103,7 @@ export function ComplaintActionPanel({
       ) : null}
 
       <Field
-        label="Public update"
+        label={t("adm.publicUpdate")}
         name="publicUpdate"
         hint="Shown to the citizen on the public tracking page and included in the notification email."
       >
@@ -116,9 +118,9 @@ export function ComplaintActionPanel({
         <Field label="Next expected update" name="expectedUpdateAt">
           <input id="expectedUpdateAt" name="expectedUpdateAt" type="datetime-local" />
         </Field>
-        <Field label="Priority" name="priority">
+        <Field label={t("adm.priority")} name="priority">
           <select id="priority" name="priority" defaultValue="">
-            <option value="">Unchanged</option>
+            <option value="">{t("adm.unchanged")}</option>
             <option value="LOW">Low</option>
             <option value="NORMAL">Normal</option>
             <option value="HIGH">High</option>
@@ -151,6 +153,7 @@ export function UserAdminForm({
   canAssignRole: boolean;
   assignableRoles: string[];
 }) {
+  const { locale, t } = useLocale();
   const form = useApiForm({
     url: `/api/admin/users/${userId}`,
     method: "PATCH",
@@ -173,11 +176,11 @@ export function UserAdminForm({
       <FormError error={form.error} issues={form.issues} />
       <FormSuccess message={form.success} />
       <div className="grid grid-2">
-        <Field label="Account status" name="status">
+        <Field label={t("adm.accountStatus")} name="status">
           <select id="status" name="status" defaultValue={status}>
             {["PENDING", "ACTIVE", "SUSPENDED", "LOCKED", "DELETED"].map((option) => (
               <option key={option} value={option}>
-                {humanize(option)}
+                {enumLabel(option, locale)}
               </option>
             ))}
           </select>
@@ -186,7 +189,7 @@ export function UserAdminForm({
           <select id="role" name="role" defaultValue={role} disabled={!canAssignRole}>
             {assignableRoles.map((option) => (
               <option key={option} value={option}>
-                {humanize(option)}
+                {enumLabel(option, locale)}
               </option>
             ))}
           </select>
@@ -196,7 +199,7 @@ export function UserAdminForm({
         <input type="checkbox" name="researcherApproved" defaultChecked={researcherApproved} />
         <span>Approved researcher (grants dataset and export access)</span>
       </label>
-      <Field label="Reason" name="reason" hint="Recorded in the audit log.">
+      <Field label={t("adm.reason")} name="reason">
         <input id="reason" name="reason" maxLength={500} />
       </Field>
       <button className="btn btn-sm" disabled={form.pending}>
@@ -219,6 +222,7 @@ export function RolePermissionEditor({
   catalog: { key: string; description: string }[];
   lockedPermissions: string[];
 }) {
+  const { locale, t } = useLocale();
   const [selected, setSelected] = useState<Set<string>>(new Set(granted));
   const form = useApiForm({
     url: `/api/admin/roles/${role}`,
@@ -278,6 +282,7 @@ export function RolePermissionEditor({
 // ------------------------------- settings editor -------------------------------
 
 export function SettingsForm({ values }: { values: Record<string, unknown> }) {
+  const { locale, t } = useLocale();
   const form = useApiForm({
     url: "/api/admin/settings",
     method: "PATCH",
@@ -353,6 +358,7 @@ export function SettingsForm({ values }: { values: Record<string, unknown> }) {
 // ------------------------------ SMTP test sender -------------------------------
 
 export function SmtpTestForm({ defaultTo }: { defaultTo: string }) {
+  const { locale, t } = useLocale();
   const form = useApiForm<{ delivered: boolean; dev: boolean }>({
     url: "/api/admin/notifications/test",
     successMessage: "Test message queued. Check the delivery log below for the result.",
@@ -386,6 +392,7 @@ export function ModerationForm({
   ratingId: string;
   currentStatus: string;
 }) {
+  const { locale, t } = useLocale();
   const form = useApiForm({
     url: `/api/admin/ratings/${ratingId}`,
     method: "PATCH",
@@ -402,7 +409,7 @@ export function ModerationForm({
       <select name="status" defaultValue={currentStatus} aria-label="Moderation status">
         {["VISIBLE", "FLAGGED", "HIDDEN", "REMOVED"].map((option) => (
           <option key={option} value={option}>
-            {humanize(option)}
+            {enumLabel(option, locale)}
           </option>
         ))}
       </select>
@@ -418,6 +425,7 @@ export function ModerationForm({
 // ------------------------------ claim review ----------------------------------
 
 export function ClaimReviewForm({ claimId }: { claimId: string }) {
+  const { locale, t } = useLocale();
   const form = useApiForm({
     url: `/api/admin/claims/${claimId}`,
     method: "PATCH",
@@ -452,6 +460,7 @@ export function ClaimReviewForm({ claimId }: { claimId: string }) {
 // ---------------------------- candidate verification ---------------------------
 
 export function CandidateVerifyForm({ candidateId }: { candidateId: string }) {
+  const { locale, t } = useLocale();
   const form = useApiForm({
     url: `/api/admin/candidates/${candidateId}/verify`,
     successMessage: "Verification decision recorded.",
@@ -499,6 +508,7 @@ export function ResultPublishForm({
   sourceName: string | null;
   sourceUrl: string | null;
 }) {
+  const { locale, t } = useLocale();
   const form = useApiForm({
     url: `/api/admin/results/${resultId}/publish`,
     successMessage: "Result updated.",
@@ -543,6 +553,7 @@ export function NewsWorkflowForm({
   status: string;
   canPublish: boolean;
 }) {
+  const { locale, t } = useLocale();
   const [next, setNext] = useState(status);
   const form = useApiForm({
     url: `/api/admin/news/${articleId}`,
@@ -575,7 +586,7 @@ export function NewsWorkflowForm({
             value={stage}
             disabled={!canPublish && (stage === "PUBLISHED" || stage === "APPROVED")}
           >
-            {humanize(stage)}
+            {enumLabel(stage, locale)}
           </option>
         ))}
       </select>
@@ -602,6 +613,7 @@ export function FactCheckReviewForm({
   status: string;
   canPublish: boolean;
 }) {
+  const { locale, t } = useLocale();
   const form = useApiForm({
     url: `/api/admin/fact-checks/${factCheckId}`,
     method: "PATCH",
@@ -620,7 +632,7 @@ export function FactCheckReviewForm({
         {["TRUE", "MOSTLY_TRUE", "MISLEADING", "FALSE", "UNVERIFIED", "INSUFFICIENT_EVIDENCE"].map(
           (option) => (
             <option key={option} value={option}>
-              {humanize(option)}
+              {enumLabel(option, locale)}
             </option>
           )
         )}
@@ -633,7 +645,7 @@ export function FactCheckReviewForm({
               value={option}
               disabled={!canPublish && (option === "PUBLISHED" || option === "APPROVED")}
             >
-              {humanize(option)}
+              {enumLabel(option, locale)}
             </option>
           )
         )}
@@ -648,6 +660,7 @@ export function FactCheckReviewForm({
 }
 
 export function PromiseUpdateForm({ promiseId, status }: { promiseId: string; status: string }) {
+  const { locale, t } = useLocale();
   const form = useApiForm({
     url: `/api/admin/promises/${promiseId}`,
     successMessage: "Progress recorded.",
@@ -669,7 +682,7 @@ export function PromiseUpdateForm({ promiseId, status }: { promiseId: string; st
         {["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "DELAYED", "CANCELLED", "UNABLE_TO_VERIFY"].map(
           (option) => (
             <option key={option} value={option}>
-              {humanize(option)}
+              {enumLabel(option, locale)}
             </option>
           )
         )}

@@ -7,11 +7,13 @@ import { Card, EmptyState, Stat } from "@/components/ui";
 import { ClaimBadge } from "@/components/status";
 import { ClaimReviewForm } from "@/components/admin-forms";
 import { formatDateTime } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Profile claims" };
 
 export default async function AdminClaimsPage() {
   const actor = await requireActorPage("/admin/claims");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "candidate.claim.review")))
     redirect("/admin");
 
@@ -39,26 +41,26 @@ export default async function AdminClaimsPage() {
 
   return (
     <>
-      <h1>Candidate profile claims</h1>
+      <h1>{t("adm.claims")}</h1>
       <p className="muted">
         Approving a claim links the requester&apos;s account to the candidate record and grants edit
         access to permitted profile fields only.
       </p>
 
       <div className="grid grid-3">
-        <Stat label="Awaiting review" value={pending.length} accent="orange" />
+        <Stat label={t("adm.awaitingReview")} value={pending.length} accent="orange" />
         <Stat
-          label="Approved"
+          label={t("adm.approved")}
           value={counts.find((r) => r.status === "APPROVED")?._count._all ?? 0}
           accent="green"
         />
-        <Stat label="Rejected" value={counts.find((r) => r.status === "REJECTED")?._count._all ?? 0} />
+        <Stat label={t("adm.rejected")} value={counts.find((r) => r.status === "REJECTED")?._count._all ?? 0} />
       </div>
 
       <div className="stack" style={{ marginTop: "1.2rem" }}>
         {pending.length === 0 ? (
           <Card>
-            <EmptyState title="No claims awaiting review" />
+            <EmptyState title={t("adm.noMatch")} />
           </Card>
         ) : (
           pending.map((claim) => (
@@ -104,7 +106,7 @@ export default async function AdminClaimsPage() {
       </div>
 
       {decided.length > 0 ? (
-        <Card title="Recent decisions" className="section-tight">
+        <Card title={t("adm.recentDecisions")} className="section-tight">
           <div className="table-wrap">
             <table className="data responsive">
               <thead>

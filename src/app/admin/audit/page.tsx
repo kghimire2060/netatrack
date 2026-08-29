@@ -5,6 +5,8 @@ import { can } from "@/lib/rbac";
 import { Badge, Card, EmptyState, Pager } from "@/components/ui";
 import { formatDateTime, humanize } from "@/lib/format";
 import type { Prisma } from "@prisma/client";
+import { getTranslator } from "@/lib/locale-server";
+import { enumLabel } from "@/lib/i18n";
 
 export const metadata = { title: "Audit log" };
 
@@ -16,6 +18,7 @@ export default async function AdminAuditPage({
   searchParams: Promise<{ action?: string; actor?: string; result?: string; page?: string }>;
 }) {
   const actor = await requireActorPage("/admin/audit");
+  const { t, locale } = await getTranslator();
   const seesAll = await can({ userId: actor.userId, role: actor.role }, "audit.view.all");
   if (!seesAll) redirect("/admin");
 
@@ -51,7 +54,7 @@ export default async function AdminAuditPage({
 
   return (
     <>
-      <h1>Audit log</h1>
+      <h1>{t("adm.audit")}</h1>
       <p className="muted">
         Every privileged action records the actor, timestamp, target, result and a redacted change
         summary. Passwords, tokens, secrets and internal notes are never written here.
@@ -59,9 +62,9 @@ export default async function AdminAuditPage({
 
       <Card className="section-tight">
         <form method="get" className="row" style={{ gap: ".6rem" }}>
-          <input name="actor" defaultValue={params.actor ?? ""} placeholder="Actor name or email" className="grow" />
+          <input name="actor" defaultValue={params.actor ?? ""} placeholder={t("adm.actor")} className="grow" />
           <select name="action" defaultValue={params.action ?? ""} aria-label="Action">
-            <option value="">All actions</option>
+            <option value="">{t("adm.allActions")}</option>
             {actions
               .sort((a, b) => a.action.localeCompare(b.action))
               .map((row) => (
@@ -76,25 +79,25 @@ export default async function AdminAuditPage({
             <option value="DENIED">Denied</option>
             <option value="FAILURE">Failure</option>
           </select>
-          <button className="btn btn-sm">Filter</button>
+          <button className="btn btn-sm">{t("common.filter")}</button>
         </form>
       </Card>
 
       {entries.length === 0 ? (
         <Card className="section-tight">
-          <EmptyState title="No audit entries match those filters" />
+          <EmptyState title={t("adm.noMatch")} />
         </Card>
       ) : (
         <div className="table-wrap" style={{ marginTop: "1rem" }}>
           <table className="data responsive">
             <thead>
               <tr>
-                <th>When</th>
-                <th>Actor</th>
-                <th>Action</th>
-                <th>Target</th>
-                <th>Result</th>
-                <th>Change summary</th>
+                <th>{t("adm.when")}</th>
+                <th>{t("adm.actor")}</th>
+                <th>{t("adm.action")}</th>
+                <th>{t("adm.target")}</th>
+                <th>{t("adm.result")}</th>
+                <th>{t("adm.changeSummary")}</th>
               </tr>
             </thead>
             <tbody>
@@ -104,7 +107,7 @@ export default async function AdminAuditPage({
                   <td data-label="Actor">
                     {entry.actor?.fullName ?? <span className="faint">System / anonymous</span>}
                     {entry.actorRole ? (
-                      <div className="small faint">{humanize(entry.actorRole)}</div>
+                      <div className="small faint">{enumLabel(entry.actorRole, locale)}</div>
                     ) : null}
                   </td>
                   <td data-label="Action">

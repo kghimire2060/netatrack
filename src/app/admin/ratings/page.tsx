@@ -7,6 +7,8 @@ import { Badge, Card, EmptyState, Stat } from "@/components/ui";
 import { ModerationForm } from "@/components/admin-forms";
 import { formatDateTime, humanize } from "@/lib/format";
 import type { ModerationStatus } from "@prisma/client";
+import { getTranslator } from "@/lib/locale-server";
+import { enumLabel } from "@/lib/i18n";
 
 export const metadata = { title: "Rating moderation" };
 
@@ -16,6 +18,7 @@ export default async function AdminRatingsPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const actor = await requireActorPage("/admin/ratings");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "rating.moderate"))) redirect("/admin");
 
   const params = await searchParams;
@@ -40,7 +43,7 @@ export default async function AdminRatingsPage({
 
   return (
     <>
-      <h1>Rating moderation</h1>
+      <h1>{t("adm.ratings")}</h1>
       <p className="muted">
         Hidden and removed ratings are excluded from every published average and count. A moderation
         reason is recorded with the decision and written to the audit log.
@@ -48,22 +51,22 @@ export default async function AdminRatingsPage({
 
       <div className="grid grid-4">
         <Stat
-          label="Visible"
+          label={t("adm.visible")}
           value={counts.find((r) => r.status === "VISIBLE")?._count._all ?? 0}
           accent="green"
         />
         <Stat
-          label="Flagged"
+          label={t("adm.flaggedRatings")}
           value={counts.find((r) => r.status === "FLAGGED")?._count._all ?? 0}
           accent="orange"
         />
-        <Stat label="Hidden or removed" value={counts.filter((r) => r.status === "HIDDEN" || r.status === "REMOVED").reduce((sum, r) => sum + r._count._all, 0)} />
-        <Stat label="Open reports" value={reports} accent={reports > 0 ? "red" : undefined} />
+        <Stat label={t("adm.status")} value={counts.filter((r) => r.status === "HIDDEN" || r.status === "REMOVED").reduce((sum, r) => sum + r._count._all, 0)} />
+        <Stat label={t("adm.openReports")} value={reports} accent={reports > 0 ? "red" : undefined} />
       </div>
 
       <div className="chip-row" style={{ margin: "1rem 0" }}>
         <Link href="/admin/ratings" className={`chip${status ? "" : " active"}`}>
-          Needs attention
+          {t("adm.needsAttention")}
         </Link>
         {["VISIBLE", "FLAGGED", "HIDDEN", "REMOVED"].map((value) => (
           <Link
@@ -71,14 +74,14 @@ export default async function AdminRatingsPage({
             href={`/admin/ratings?status=${value}`}
             className={`chip${status === value ? " active" : ""}`}
           >
-            {humanize(value)}
+            {enumLabel(value, locale)}
           </Link>
         ))}
       </div>
 
       {ratings.length === 0 ? (
         <Card>
-          <EmptyState title="Nothing needs moderation" hint="Flagged ratings and open reports appear here." />
+          <EmptyState title={t("adm.nothingToModerate")} hint="Flagged ratings and open reports appear here." />
         </Card>
       ) : (
         <div className="stack">
@@ -93,7 +96,7 @@ export default async function AdminRatingsPage({
                       </Link>
                     </strong>
                     <Badge tone={rating.status === "VISIBLE" ? "good" : "warn"}>
-                      {humanize(rating.status)}
+                      {enumLabel(rating.status, locale)}
                     </Badge>
                     <span className="badge badge-navy">{rating.weightedScore.toFixed(1)}/5</span>
                   </div>

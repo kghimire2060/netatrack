@@ -6,11 +6,14 @@ import { Card, EmptyState, Stat } from "@/components/ui";
 import { ClaimBadge, ComplaintBadge, ContentBadge } from "@/components/status";
 import { smtpConfigured } from "@/lib/email";
 import { formatDateTime, humanize, relativeTime } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
+import { enumLabel } from "@/lib/i18n";
 
 export const metadata = { title: "Admin dashboard" };
 
 export default async function AdminDashboard() {
   const actor = await requireActorPage("/admin");
+  const { t, locale } = await getTranslator();
   const seesAll = await can({ userId: actor.userId, role: actor.role }, "complaint.view.all");
 
   const queueScope = seesAll ? {} : { assignedToId: actor.userId };
@@ -79,26 +82,26 @@ export default async function AdminDashboard() {
     <>
       <div className="row-between">
         <div>
-          <h1>Dashboard</h1>
+          <h1>{t("adm.dashboard")}</h1>
           <p className="muted">
-            {seesAll ? "All queues" : "Your assigned queue"} · signed in as {actor.fullName} (
-            {humanize(actor.role)})
+            {seesAll ? t("adm.allQueues") : t("adm.yourQueue")} · {t("adm.signedInAs")}{" "}
+            {actor.fullName} ({enumLabel(actor.role, locale)})
           </p>
         </div>
       </div>
 
       <div className="grid grid-4">
-        <Stat label="Open issues" value={openIssues} />
-        <Stat label="Overdue" value={overdueIssues} accent={overdueIssues > 0 ? "red" : undefined} />
-        <Stat label="Unassigned" value={unassigned} accent="orange" />
-        <Stat label="Resolved (24h)" value={resolvedToday} accent="green" />
+        <Stat label={t("adm.openIssues")} value={openIssues} />
+        <Stat label={t("adm.overdue")} value={overdueIssues} accent={overdueIssues > 0 ? "red" : undefined} />
+        <Stat label={t("adm.unassigned")} value={unassigned} accent="orange" />
+        <Stat label={t("adm.resolved24")} value={resolvedToday} accent="green" />
       </div>
 
       <div className="grid grid-4" style={{ marginTop: "1rem" }}>
-        <Stat label="Pending profile claims" value={pendingClaims} accent="purple" />
-        <Stat label="Candidates awaiting verification" value={pendingCandidates} />
-        <Stat label="Content in review" value={draftContent} />
-        <Stat label="Flagged ratings" value={flaggedRatings} accent={flaggedRatings > 0 ? "red" : undefined} />
+        <Stat label={t("adm.pendingClaims")} value={pendingClaims} accent="purple" />
+        <Stat label={t("adm.awaitingVerification")} value={pendingCandidates} />
+        <Stat label={t("adm.contentInReview")} value={draftContent} />
+        <Stat label={t("adm.flaggedRatings")} value={flaggedRatings} accent={flaggedRatings > 0 ? "red" : undefined} />
       </div>
 
       {(failedEmails > 0 || reopenRequests > 0 || !smtpConfigured()) && (
@@ -128,7 +131,7 @@ export default async function AdminDashboard() {
 
       <div className="grid grid-sidebar" style={{ marginTop: "1.2rem" }}>
         <Card
-          title="Issue queue"
+          title={t("adm.issueQueue")}
           action={
             <Link className="small" href="/admin/complaints">
               Open queue
@@ -136,17 +139,17 @@ export default async function AdminDashboard() {
           }
         >
           {recentQueue.length === 0 ? (
-            <EmptyState title="Nothing in your queue" />
+            <EmptyState title={t("adm.nothingInQueue")} />
           ) : (
             <div className="table-wrap">
               <table className="data responsive">
                 <thead>
                   <tr>
-                    <th>Tracking ID</th>
-                    <th>Issue</th>
-                    <th>Status</th>
-                    <th>Assignee</th>
-                    <th>Due</th>
+                    <th>{t("adm.trackingId")}</th>
+                    <th>{t("adm.issue")}</th>
+                    <th>{t("adm.status")}</th>
+                    <th>{t("adm.assignee")}</th>
+                    <th>{t("adm.due")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -183,7 +186,7 @@ export default async function AdminDashboard() {
 
         <aside className="stack">
           <Card
-            title="Recent privileged activity"
+            title={t("adm.recentActivity")}
             action={
               <Link className="small" href="/admin/audit">
                 Audit log
@@ -204,7 +207,7 @@ export default async function AdminDashboard() {
             </ul>
           </Card>
 
-          <Card title="Pending review">
+          <Card title={t("adm.pendingReview")}>
             <ul className="small" style={{ paddingLeft: "1.1rem", margin: 0 }}>
               <li>
                 <Link href="/admin/claims">{pendingClaims} candidate profile claims</Link>{" "}

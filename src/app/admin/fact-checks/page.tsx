@@ -7,11 +7,13 @@ import { Card, EmptyState, Stat } from "@/components/ui";
 import { ContentBadge, VerdictBadge } from "@/components/status";
 import { FactCheckReviewForm } from "@/components/admin-forms";
 import { formatDateTime } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Fact checks" };
 
 export default async function AdminFactChecksPage() {
   const actor = await requireActorPage("/admin/fact-checks");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "factcheck.review"))) redirect("/admin");
   const canReview = await can({ userId: actor.userId, role: actor.role }, "factcheck.review");
   const canPublish = await can({ userId: actor.userId, role: actor.role }, "factcheck.publish");
@@ -32,21 +34,21 @@ export default async function AdminFactChecksPage() {
 
   return (
     <>
-      <h1>Fact checks</h1>
+      <h1>{t("adm.factChecks")}</h1>
       <p className="muted">
         Claim intake → evidence → reviewer → verdict → editor approval → publish. A subject response
         can be attached but never replaces the verdict.
       </p>
 
       <div className="grid grid-3">
-        <Stat label="Total" value={factChecks.length} />
+        <Stat label={t("adm.total")} value={factChecks.length} />
         <Stat
-          label="Published"
+          label={t("adm.published")}
           value={counts.find((r) => r.status === "PUBLISHED")?._count._all ?? 0}
           accent="green"
         />
         <Stat
-          label="In pipeline"
+          label={t("adm.inPipeline")}
           value={counts
             .filter((r) => r.status !== "PUBLISHED" && r.status !== "ARCHIVED")
             .reduce((sum, r) => sum + r._count._all, 0)}
@@ -56,7 +58,7 @@ export default async function AdminFactChecksPage() {
 
       {factChecks.length === 0 ? (
         <Card className="section-tight">
-          <EmptyState title="No fact checks recorded" />
+          <EmptyState title={t("adm.noMatch")} />
         </Card>
       ) : (
         <div className="stack" style={{ marginTop: "1rem" }}>

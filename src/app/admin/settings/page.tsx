@@ -5,30 +5,32 @@ import { allSettings } from "@/lib/settings";
 import { smtpConfigured } from "@/lib/email";
 import { Card } from "@/components/ui";
 import { SettingsForm } from "@/components/admin-forms";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "System settings" };
 
 export default async function AdminSettingsPage() {
   const actor = await requireActorPage("/admin/settings");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "settings.manage"))) redirect("/admin");
 
   const values = await allSettings();
 
   return (
     <>
-      <h1>System settings</h1>
+      <h1>{t("adm.settings")}</h1>
       <p className="muted">
         Brand text, complaint policy and feature flags. Secrets are never stored here — they live in
         server environment variables.
       </p>
 
       <div className="grid grid-sidebar">
-        <Card title="Configuration">
+        <Card title={t("adm.configuration")}>
           <SettingsForm values={values} />
         </Card>
 
         <aside className="stack">
-          <Card title="Environment">
+          <Card title={t("adm.environment")}>
             <dl className="kv">
               <dt>SMTP</dt>
               <dd>

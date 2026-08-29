@@ -7,6 +7,7 @@ import { Badge, Card, EmptyState, Stat } from "@/components/ui";
 import { VerificationBadge } from "@/components/status";
 import { ResultPublishForm } from "@/components/admin-forms";
 import { formatDateTime, formatNumber, formatPercent } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Results" };
 
@@ -16,6 +17,7 @@ export default async function AdminResultsPage({
   searchParams: Promise<{ election?: string; status?: string }>;
 }) {
   const actor = await requireActorPage("/admin/results");
+  const { t, locale } = await getTranslator();
   if (!(await can({ userId: actor.userId, role: actor.role }, "result.manage"))) redirect("/admin");
   const canPublish = await can({ userId: actor.userId, role: actor.role }, "result.publish");
 
@@ -46,17 +48,17 @@ export default async function AdminResultsPage({
 
   return (
     <>
-      <h1>Election results</h1>
+      <h1>{t("adm.results")}</h1>
       <p className="muted">
         An official result cannot be verified without a recorded source. Publishing writes an audit
         entry with the source and vote count.
       </p>
 
       <div className="grid grid-3">
-        <Stat label="Result records" value={results.length} />
-        <Stat label="Awaiting verification" value={pending} accent="orange" />
+        <Stat label={t("adm.total")} value={results.length} />
+        <Stat label={t("adm.awaitingReview")} value={pending} accent="orange" />
         <Stat
-          label="Verified"
+          label={t("adm.verified")}
           value={results.filter((result) => result.status === "VERIFIED").length}
           accent="green"
         />
@@ -72,18 +74,18 @@ export default async function AdminResultsPage({
             ))}
           </select>
           <select name="status" defaultValue={params.status ?? ""} aria-label="Status">
-            <option value="">All statuses</option>
+            <option value="">{t("adm.allStatuses")}</option>
             <option value="PENDING">Pending</option>
             <option value="VERIFIED">Verified</option>
             <option value="REJECTED">Rejected</option>
           </select>
-          <button className="btn btn-sm">Filter</button>
+          <button className="btn btn-sm">{t("common.filter")}</button>
         </form>
       </Card>
 
       {results.length === 0 ? (
         <Card className="section-tight">
-          <EmptyState title="No result records for this election" />
+          <EmptyState title={t("adm.noMatch")} />
         </Card>
       ) : (
         <div className="stack" style={{ marginTop: "1rem" }}>

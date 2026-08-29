@@ -8,6 +8,8 @@ import { ComplaintBadge } from "@/components/status";
 import { COMPLAINT_FLOW } from "@/lib/complaint-workflow";
 import { humanize, relativeTime } from "@/lib/format";
 import type { ComplaintStatus, Prisma } from "@prisma/client";
+import { getTranslator } from "@/lib/locale-server";
+import { enumLabel } from "@/lib/i18n";
 
 export const metadata = { title: "Issue queue" };
 
@@ -26,6 +28,7 @@ export default async function AdminComplaintsPage({
   }>;
 }) {
   const actor = await requireActorPage("/admin/complaints");
+  const { t, locale } = await getTranslator();
   const seesAll = await can({ userId: actor.userId, role: actor.role }, "complaint.view.all");
   const seesAssigned = await can(
     { userId: actor.userId, role: actor.role },
@@ -96,7 +99,7 @@ export default async function AdminComplaintsPage({
     <>
       <div className="row-between">
         <div>
-          <h1>Issue queue</h1>
+          <h1>{t("adm.issueQueue")}</h1>
           <p className="muted">
             {seesAll
               ? "All citizen issues. Internal notes are visible here and never on the public page."
@@ -106,17 +109,17 @@ export default async function AdminComplaintsPage({
       </div>
 
       <div className="grid grid-4">
-        <Stat label="Open" value={open} />
+        <Stat label={t("adm.openIssues")} value={open} />
         <Stat
-          label="Resolved"
+          label={t("adm.resolved24")}
           value={counts.find((row) => row.status === "RESOLVED")?._count._all ?? 0}
           accent="green"
         />
         <Stat
-          label="Closed"
+          label={t("adm.status")}
           value={counts.find((row) => row.status === "CLOSED")?._count._all ?? 0}
         />
-        <Stat label="Matching filter" value={total} accent="purple" />
+        <Stat label={t("adm.total")} value={total} accent="purple" />
       </div>
 
       <Card className="section-tight">
@@ -128,47 +131,47 @@ export default async function AdminComplaintsPage({
             className="grow"
           />
           <select name="status" defaultValue={params.status ?? ""} aria-label="Status">
-            <option value="">All statuses</option>
+            <option value="">{t("adm.allStatuses")}</option>
             {COMPLAINT_FLOW.map((value) => (
               <option key={value} value={value}>
-                {humanize(value)}
+                {enumLabel(value, locale)}
               </option>
             ))}
           </select>
           <label className="row small">
             <input type="checkbox" name="overdue" value="1" defaultChecked={params.overdue === "1"} />
-            <span>Overdue</span>
+            <span>{t("adm.overdue")}</span>
           </label>
           <label className="row small">
             <input type="checkbox" name="reopen" value="1" defaultChecked={params.reopen === "1"} />
-            <span>Reopen requested</span>
+            <span>{t("adm.reopenRequested")}</span>
           </label>
           {seesAll ? (
             <label className="row small">
               <input type="checkbox" name="mine" value="1" defaultChecked={params.mine === "1"} />
-              <span>Mine</span>
+              <span>{t("adm.mine")}</span>
             </label>
           ) : null}
-          <button className="btn btn-sm">Filter</button>
+          <button className="btn btn-sm">{t("common.filter")}</button>
         </form>
       </Card>
 
       {complaints.length === 0 ? (
         <Card className="section-tight">
-          <EmptyState title="No issues match those filters" />
+          <EmptyState title={t("adm.noMatch")} />
         </Card>
       ) : (
         <div className="table-wrap" style={{ marginTop: "1rem" }}>
           <table className="data responsive">
             <thead>
               <tr>
-                <th>Tracking ID</th>
-                <th>Issue</th>
-                <th>Category</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Assignee</th>
-                <th>Due</th>
+                <th>{t("adm.trackingId")}</th>
+                <th>{t("adm.issue")}</th>
+                <th>{t("adm.category")}</th>
+                <th>{t("adm.priority")}</th>
+                <th>{t("adm.status")}</th>
+                <th>{t("adm.assignee")}</th>
+                <th>{t("adm.due")}</th>
               </tr>
             </thead>
             <tbody>
@@ -206,14 +209,14 @@ export default async function AdminComplaintsPage({
                               : "muted"
                         }
                       >
-                        {humanize(complaint.priority)}
+                        {enumLabel(complaint.priority, locale)}
                       </Badge>
                     </td>
                     <td data-label="Status">
                       <ComplaintBadge status={complaint.status} />
                     </td>
                     <td data-label="Assignee">
-                      {complaint.assignedTo?.fullName ?? <span className="faint">Unassigned</span>}
+                      {complaint.assignedTo?.fullName ?? <span className="faint">{t("adm.unassigned")}</span>}
                     </td>
                     <td data-label="Due">
                       <span style={overdue ? { color: "var(--red)", fontWeight: 700 } : undefined}>
