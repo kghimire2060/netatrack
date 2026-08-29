@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getActor } from "@/lib/auth";
 import { Avatar, Badge, Breadcrumb, Card, EmptyState, Meter, Stars } from "@/components/ui";
-import { PromiseBadge, VerdictBadge, VerificationBadge } from "@/components/status";
+import { LevelBadge, PromiseBadge, VerdictBadge, VerificationBadge } from "@/components/status";
 import { RatingForm } from "@/components/civic-forms";
 import { RATING_DIMENSIONS, summarize } from "@/lib/ratings";
 import { formatDate, formatDateTime, formatNumber, formatPercent } from "@/lib/format";
@@ -90,7 +90,9 @@ export default async function CandidatePage({ params }: { params: Promise<{ slug
             <div className="row" style={{ gap: ".5rem" }}>
               <h1 style={{ margin: 0 }}>{candidate.fullName}</h1>
               <VerificationBadge status={candidate.verificationStatus} />
+              <LevelBadge level={candidate.level} />
               {candidate.isIncumbent ? <Badge tone="navy">Incumbent</Badge> : null}
+              {candidate.isIndependent ? <Badge tone="muted">Independent</Badge> : null}
               {candidate.accountId ? <Badge tone="purple">Profile claimed</Badge> : null}
             </div>
             <p className="muted" style={{ margin: ".3rem 0 0" }}>
@@ -99,6 +101,11 @@ export default async function CandidatePage({ params }: { params: Promise<{ slug
                 ? ` · ${candidate.constituency.name}, ${candidate.constituency.district}, ${candidate.constituency.province}`
                 : ""}
             </p>
+            {candidate.office ? (
+              <p className="small" style={{ margin: ".35rem 0 0", fontWeight: 600 }}>
+                {candidate.office}
+              </p>
+            ) : null}
             {candidate.keyIssues ? (
               <div className="chip-row" style={{ marginTop: ".6rem" }}>
                 {candidate.keyIssues.split(",").map((issue) => (
@@ -134,6 +141,18 @@ export default async function CandidatePage({ params }: { params: Promise<{ slug
               <dd>{candidate.previousPositions ?? "Not recorded"}</dd>
               <dt>Public agenda</dt>
               <dd>{candidate.agenda ?? "Not recorded"}</dd>
+              {candidate.termsServed !== null ? (
+                <>
+                  <dt>Terms served</dt>
+                  <dd>{candidate.termsServed}</dd>
+                </>
+              ) : null}
+              {candidate.prGroup ? (
+                <>
+                  <dt>Proportional representation group</dt>
+                  <dd>{candidate.prGroup}</dd>
+                </>
+              ) : null}
               {socialLinks
                 ? Object.entries(socialLinks).map(([label, url]) => (
                     <div key={label} style={{ display: "contents" }}>

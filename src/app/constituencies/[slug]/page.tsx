@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Avatar, Badge, Breadcrumb, Card, EmptyState, Stat, Stars } from "@/components/ui";
-import { ComplaintBadge, VerificationBadge } from "@/components/status";
+import { ComplaintBadge, IssueBadge, LevelBadge, VerificationBadge } from "@/components/status";
 import { formatNumber, formatPercent, relativeTime } from "@/lib/format";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -43,6 +43,10 @@ export default async function ConstituencyPage({ params }: { params: Promise<{ s
         select: { trackingId: true, title: true, status: true, category: true, createdAt: true },
       },
       promises: { take: 10, orderBy: { lastUpdateAt: "desc" } },
+      issues: { orderBy: { position: "asc" } },
+      historicalResults: { orderBy: [{ bsYear: "desc" }, { winnerName: "asc" }] },
+      parent: { select: { name: true, slug: true } },
+      children: { select: { name: true, slug: true }, orderBy: { name: "asc" } },
       _count: { select: { complaints: true } },
     },
   });
@@ -64,15 +68,30 @@ export default async function ConstituencyPage({ params }: { params: Promise<{ s
         ]}
       />
 
-      <h1>{constituency.name}</h1>
+      <div className="row" style={{ gap: ".5rem" }}>
+        <h1 style={{ margin: 0 }}>{constituency.name}</h1>
+        <LevelBadge level={constituency.level} />
+      </div>
       <p className="muted">
         {constituency.district} district, {constituency.province} province
+        {constituency.wards ? ` · ${constituency.wards} wards` : ""}
+        {constituency.parent ? (
+          <>
+            {" · part of "}
+            <Link href={`/constituencies/${constituency.parent.slug}`}>
+              {constituency.parent.name}
+            </Link>
+          </>
+        ) : null}
       </p>
 
       <div className="grid grid-4">
         <Stat label="Registered voters" value={formatNumber(constituency.registeredVoters)} />
         <Stat label="Candidates" value={formatNumber(constituency.candidates.length)} />
-        <Stat label="Polling stations" value={formatNumber(constituency.pollingStations.length)} />
+        <Stat
+          label="Polling stations"
+          value={formatNumber(constituency.pollingStationCount ?? constituency.pollingStations.length)}
+        />
         <Stat
           label="Citizen issues"
           value={formatNumber(constituency._count.complaints)}
@@ -215,7 +234,16 @@ export default async function ConstituencyPage({ params }: { params: Promise<{ s
 
         <aside className="stack">
           <Card title="Major public issues">
-            {constituency.majorIssues ? (
+            {constituency.issues.length > 0 ? (
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {constituency.issues.map((issue) => (
+                  <li key={issue.id} className="row-between" style={{ marginBottom: ".45rem" }}>
+                    <span className="small">{issue.title}</span>
+                    <IssueBadge status={issue.status} />
+                  </li>
+                ))}
+              </ul>
+            ) : constituency.majorIssues ? (
               <div className="chip-row">
                 {constituency.majorIssues.split(",").map((issue) => (
                   <span className="chip" key={issue.trim()}>
@@ -258,6 +286,40 @@ export default async function ConstituencyPage({ params }: { params: Promise<{ s
               </ul>
             )}
           </Card>
+
+          {constituency.historicalResults.length > 0 ? (
+            <Card title="Previous winners">
+              <ul className="timeline">
+                {constituency.historicalResults.map((result) => (
+                  <li key={result.id} className="is-muted">
+                    <div className="when">BS {result.bsYear}</div>
+                    <div className="what">{result.winnerName}</div>
+                    <div className="small muted">
+                      {result.winnerAffiliation ?? "Affiliation not recorded"}
+                      {result.margin ? ` · won by ${formatNumber(result.margin)} votes` : ""}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <p className="small faint" style={{ margin: 0 }}>
+                Winner summaries carried over from the previous system. They record a
+                margin, not a full per-candidate count, so they are kept apart from the
+                verified results above.
+              </p>
+            </Card>
+          ) : null}
+
+          {constituency.children.length > 0 ? (
+            <Card title={`Provincial constituencies (${constituency.children.length})`}>
+              <div className="chip-row">
+                {constituency.children.map((child) => (
+                  <Link key={child.slug} className="chip" href={`/constituencies/${child.slug}`}>
+                    {child.name}
+                  </Link>
+                ))}
+              </div>
+            </Card>
+          ) : null}
 
           {constituency.promises.length > 0 ? (
             <Card title="Local promises">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Card, EmptyState } from "@/components/ui";
+import { LevelBadge } from "@/components/status";
 import { formatNumber } from "@/lib/format";
 
 export const metadata = { title: "Constituencies" };
@@ -8,13 +9,16 @@ export const metadata = { title: "Constituencies" };
 export default async function ConstituenciesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ province?: string; q?: string }>;
+  searchParams: Promise<{ province?: string; q?: string; level?: string }>;
 }) {
   const params = await searchParams;
 
   const constituencies = await prisma.constituency.findMany({
     where: {
       ...(params.province ? { province: params.province } : {}),
+      ...(params.level === "FEDERAL" || params.level === "PROVINCIAL"
+        ? { level: params.level }
+        : {}),
       ...(params.q
         ? {
             OR: [
@@ -32,6 +36,8 @@ export default async function ConstituenciesPage({
       province: true,
       district: true,
       registeredVoters: true,
+      level: true,
+      pollingStationCount: true,
       _count: { select: { candidates: true, pollingStations: true, complaints: true } },
     },
   });
@@ -53,6 +59,11 @@ export default async function ConstituenciesPage({
       <Card>
         <form method="get" className="row" style={{ gap: ".6rem" }}>
           <input name="q" defaultValue={params.q ?? ""} placeholder="Search constituency or district" className="grow" />
+          <select name="level" defaultValue={params.level ?? ""} aria-label="Level">
+            <option value="">All levels</option>
+            <option value="FEDERAL">Federal</option>
+            <option value="PROVINCIAL">Provincial</option>
+          </select>
           <select name="province" defaultValue={params.province ?? ""}>
             <option value="">All provinces</option>
             {provinces.map((row) => (
@@ -75,6 +86,7 @@ export default async function ConstituenciesPage({
             <thead>
               <tr>
                 <th>Constituency</th>
+                <th>Level</th>
                 <th>District</th>
                 <th>Province</th>
                 <th className="num">Registered voters</th>
@@ -89,6 +101,9 @@ export default async function ConstituenciesPage({
                   <td data-label="Constituency">
                     <Link href={`/constituencies/${constituency.slug}`}>{constituency.name}</Link>
                   </td>
+                  <td data-label="Level">
+                    <LevelBadge level={constituency.level} />
+                  </td>
                   <td data-label="District">{constituency.district}</td>
                   <td data-label="Province">{constituency.province}</td>
                   <td className="num" data-label="Registered voters">
@@ -98,7 +113,7 @@ export default async function ConstituenciesPage({
                     {constituency._count.candidates}
                   </td>
                   <td className="num" data-label="Polling stations">
-                    {constituency._count.pollingStations}
+                    {constituency.pollingStationCount ?? constituency._count.pollingStations}
                   </td>
                   <td className="num" data-label="Citizen issues">
                     {constituency._count.complaints}

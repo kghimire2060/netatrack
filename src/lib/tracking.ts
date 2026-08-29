@@ -50,7 +50,14 @@ export function dateFormTrackingId(now = new Date()): string {
   return `NT-${date}-${suffix}`;
 }
 
-const TRACKING_RE = /^NT-(ISSUE-\d{8}|\d{4}-\d{2}-\d{2}-[0-9A-HJKMNP-TV-Z]{6})$/;
+/**
+ * Accepted public tracking IDs:
+ *   NT-ISSUE-00000001        current sequence
+ *   NT-2026-08-29-7F4K2P     date + random form
+ *   NT-LEGACY-00001          imported from the previous system
+ */
+const TRACKING_RE =
+  /^NT-(ISSUE-\d{8}|LEGACY-\d{5}|\d{4}-\d{2}-\d{2}-[0-9A-HJKMNP-TV-Z]{6})$/;
 
 export function isValidTrackingId(value: string) {
   return TRACKING_RE.test(value.trim().toUpperCase());

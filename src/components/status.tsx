@@ -1,4 +1,4 @@
-import type { ComplaintStatus, ContentStatus, FactCheckVerdict, PromiseStatus, VerificationStatus, ElectionStatus, ClaimStatus, AccountStatus } from "@prisma/client";
+import type { ComplaintStatus, ContentStatus, FactCheckVerdict, PromiseStatus, VerificationStatus, ElectionStatus, ClaimStatus, AccountStatus, IssueStatus, GovernmentLevel } from "@prisma/client";
 import { Badge, type Tone } from "./ui";
 import { humanize } from "@/lib/format";
 
@@ -93,6 +93,26 @@ export const ClaimBadge = ({ status }: { status: ClaimStatus }) => (
 );
 export const AccountBadge = ({ status }: { status: AccountStatus }) => (
   <Badge tone={ACCOUNT_TONE[status]}>{humanize(status)}</Badge>
+);
+
+const ISSUE_TONE: Record<IssueStatus, Tone> = {
+  RAISED: "muted",
+  ONGOING: "warn",
+  PRIORITY: "bad",
+  RESOLVED: "good",
+};
+
+const LEVEL_TONE: Record<GovernmentLevel, Tone> = {
+  FEDERAL: "navy",
+  PROVINCIAL: "purple",
+  LOCAL: "muted",
+};
+
+export const IssueBadge = ({ status }: { status: IssueStatus }) => (
+  <Badge tone={ISSUE_TONE[status]}>{humanize(status)}</Badge>
+);
+export const LevelBadge = ({ level }: { level: GovernmentLevel }) => (
+  <Badge tone={LEVEL_TONE[level]}>{humanize(level)}</Badge>
 );
 
 export { COMPLAINT_TONE };
