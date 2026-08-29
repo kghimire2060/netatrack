@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Card, EmptyState, Stat } from "@/components/ui";
 import { ClaimBadge } from "@/components/status";
@@ -11,7 +11,7 @@ import { formatDateTime } from "@/lib/format";
 export const metadata = { title: "Profile claims" };
 
 export default async function AdminClaimsPage() {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/claims");
   if (!(await can({ userId: actor.userId, role: actor.role }, "candidate.claim.review")))
     redirect("/admin");
 

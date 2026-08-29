@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Card, EmptyState, Stat } from "@/components/ui";
 import { ContentBadge, VerdictBadge } from "@/components/status";
@@ -11,7 +11,7 @@ import { formatDateTime } from "@/lib/format";
 export const metadata = { title: "Fact checks" };
 
 export default async function AdminFactChecksPage() {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/fact-checks");
   if (!(await can({ userId: actor.userId, role: actor.role }, "factcheck.review"))) redirect("/admin");
   const canReview = await can({ userId: actor.userId, role: actor.role }, "factcheck.review");
   const canPublish = await can({ userId: actor.userId, role: actor.role }, "factcheck.publish");

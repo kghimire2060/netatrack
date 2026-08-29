@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Card, EmptyState, Stat } from "@/components/ui";
 import { PromiseBadge } from "@/components/status";
@@ -11,7 +11,7 @@ import { formatDateTime } from "@/lib/format";
 export const metadata = { title: "Promises" };
 
 export default async function AdminPromisesPage() {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/promises");
   if (!(await can({ userId: actor.userId, role: actor.role }, "promise.manage"))) redirect("/admin");
   const canManage = await can({ userId: actor.userId, role: actor.role }, "promise.manage");
 

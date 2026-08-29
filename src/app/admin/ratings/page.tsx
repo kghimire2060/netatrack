@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Badge, Card, EmptyState, Stat } from "@/components/ui";
 import { ModerationForm } from "@/components/admin-forms";
@@ -15,7 +15,7 @@ export default async function AdminRatingsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/ratings");
   if (!(await can({ userId: actor.userId, role: actor.role }, "rating.moderate"))) redirect("/admin");
 
   const params = await searchParams;

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Card, EmptyState, Stat } from "@/components/ui";
 import { ElectionBadge } from "@/components/status";
@@ -10,7 +10,7 @@ import { formatDate, formatNumber, humanize } from "@/lib/format";
 export const metadata = { title: "Elections" };
 
 export default async function AdminElectionsPage() {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/elections");
   if (!(await can({ userId: actor.userId, role: actor.role }, "election.manage"))) redirect("/admin");
 
   const [elections, constituencies, stations, parties] = await Promise.all([

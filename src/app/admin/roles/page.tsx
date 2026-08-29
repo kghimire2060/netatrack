@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can, permissionsForRole } from "@/lib/rbac";
 import { Card } from "@/components/ui";
 import { RolePermissionEditor } from "@/components/admin-forms";
@@ -12,7 +12,7 @@ export const metadata = { title: "Roles and permissions" };
 const ROLES: RoleName[] = ["SUPER_ADMIN", "ADMIN", "STAFF", "CITIZEN", "CANDIDATE", "RESEARCHER"];
 
 export default async function AdminRolesPage() {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/roles");
   if (!(await can({ userId: actor.userId, role: actor.role }, "role.manage"))) redirect("/admin");
 
   const granted = await Promise.all(

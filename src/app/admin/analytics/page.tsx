@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Card, EmptyState, Meter, Stat } from "@/components/ui";
 import { formatNumber, humanize } from "@/lib/format";
@@ -9,7 +9,7 @@ export const metadata = { title: "Analytics" };
 
 /** Operational analytics for staff and administrators (section 14, 15). */
 export default async function AdminAnalyticsPage() {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/analytics");
   if (!(await can({ userId: actor.userId, role: actor.role }, "analytics.view"))) redirect("/admin");
 
   const [

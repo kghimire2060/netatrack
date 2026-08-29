@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Badge, Card, EmptyState, Stat } from "@/components/ui";
 import { VerificationBadge } from "@/components/status";
@@ -15,7 +15,7 @@ export default async function AdminResultsPage({
 }: {
   searchParams: Promise<{ election?: string; status?: string }>;
 }) {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/results");
   if (!(await can({ userId: actor.userId, role: actor.role }, "result.manage"))) redirect("/admin");
   const canPublish = await can({ userId: actor.userId, role: actor.role }, "result.publish");
 

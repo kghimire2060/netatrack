@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Card, EmptyState, Pager, Stat } from "@/components/ui";
 import { VerificationBadge } from "@/components/status";
@@ -18,7 +18,7 @@ export default async function AdminCandidatesPage({
 }: {
   searchParams: Promise<{ q?: string; verification?: string; page?: string }>;
 }) {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/candidates");
   if (!(await can({ userId: actor.userId, role: actor.role }, "candidate.edit"))) redirect("/admin");
   const canVerify = await can({ userId: actor.userId, role: actor.role }, "candidate.verify");
 

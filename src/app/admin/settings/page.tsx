@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { allSettings } from "@/lib/settings";
 import { smtpConfigured } from "@/lib/email";
@@ -9,7 +9,7 @@ import { SettingsForm } from "@/components/admin-forms";
 export const metadata = { title: "System settings" };
 
 export default async function AdminSettingsPage() {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/settings");
   if (!(await can({ userId: actor.userId, role: actor.role }, "settings.manage"))) redirect("/admin");
 
   const values = await allSettings();

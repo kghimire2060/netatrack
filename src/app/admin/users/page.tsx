@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Card, EmptyState, Pager, Stat } from "@/components/ui";
 import { AccountBadge } from "@/components/status";
@@ -18,7 +18,7 @@ export default async function AdminUsersPage({
 }: {
   searchParams: Promise<{ q?: string; role?: string; status?: string; page?: string }>;
 }) {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/users");
   if (!(await can({ userId: actor.userId, role: actor.role }, "user.view"))) redirect("/admin");
 
   const canEdit = await can({ userId: actor.userId, role: actor.role }, "user.edit");

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Badge, Breadcrumb, Card } from "@/components/ui";
 import { ComplaintBadge } from "@/components/status";
@@ -17,7 +17,7 @@ export default async function AdminComplaintDetail({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/complaints");
   const { id } = await params;
 
   const complaint = await prisma.complaint.findUnique({

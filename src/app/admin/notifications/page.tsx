@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { smtpConfigured } from "@/lib/email";
 import { Badge, Card, EmptyState, Stat } from "@/components/ui";
@@ -10,7 +10,7 @@ import { formatDateTime } from "@/lib/format";
 export const metadata = { title: "Email and notifications" };
 
 export default async function AdminNotificationsPage() {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/notifications");
   if (!(await can({ userId: actor.userId, role: actor.role }, "settings.manage"))) redirect("/admin");
 
   const [counts, recent, byType] = await Promise.all([

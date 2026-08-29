@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Card, EmptyState, Stat } from "@/components/ui";
 import { ClaimBadge, ComplaintBadge, ContentBadge } from "@/components/status";
@@ -10,7 +10,7 @@ import { formatDateTime, humanize, relativeTime } from "@/lib/format";
 export const metadata = { title: "Admin dashboard" };
 
 export default async function AdminDashboard() {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin");
   const seesAll = await can({ userId: actor.userId, role: actor.role }, "complaint.view.all");
 
   const queueScope = seesAll ? {} : { assignedToId: actor.userId };

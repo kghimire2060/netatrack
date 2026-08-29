@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Badge, Card, EmptyState, Meter, Stat } from "@/components/ui";
 import { formatDate, formatNumber, humanize } from "@/lib/format";
@@ -8,7 +8,7 @@ import { formatDate, formatNumber, humanize } from "@/lib/format";
 export const metadata = { title: "Polls" };
 
 export default async function AdminPollsPage() {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/polls");
   if (!(await can({ userId: actor.userId, role: actor.role }, "poll.manage"))) redirect("/admin");
 
   const polls = await prisma.poll.findMany({

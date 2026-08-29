@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireActor } from "@/lib/auth";
+import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Badge, Card, EmptyState, Pager } from "@/components/ui";
 import { formatDateTime, humanize } from "@/lib/format";
@@ -15,7 +15,7 @@ export default async function AdminAuditPage({
 }: {
   searchParams: Promise<{ action?: string; actor?: string; result?: string; page?: string }>;
 }) {
-  const actor = await requireActor();
+  const actor = await requireActorPage("/admin/audit");
   const seesAll = await can({ userId: actor.userId, role: actor.role }, "audit.view.all");
   if (!seesAll) redirect("/admin");
 
