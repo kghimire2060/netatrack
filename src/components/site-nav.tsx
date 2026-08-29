@@ -52,7 +52,7 @@ export function SiteNav({ user }: { user: NavUser }) {
   return (
     <nav className={`nav${open ? " open" : ""}`} aria-label={t("nav.home")}>
       <div className="nav-inner">
-        <Brand t={t} />
+        <Brand locale={locale} />
 
         <button
           className="icon-btn nav-toggle"

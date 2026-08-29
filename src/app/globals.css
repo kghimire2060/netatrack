@@ -167,17 +167,6 @@ p { margin: 0 0 .85rem; }
   display: flex; align-items: center; gap: 1rem;
 }
 
-.brand { display: flex; align-items: center; gap: .55rem; color: var(--ink); }
-.brand:hover { text-decoration: none; }
-.brand-mark { flex: 0 0 auto; display: block; }
-.brand-text { display: flex; flex-direction: column; line-height: 1.05; }
-.brand-name { font-size: 1.3rem; font-weight: 800; letter-spacing: -.03em; color: var(--navy); }
-:root[data-theme="dark"] .brand-name { color: #fff; }
-.brand-name em { font-style: normal; color: var(--red); }
-.brand-tag {
-  font-size: .56rem; font-weight: 600; letter-spacing: .06em;
-  color: var(--ink-faint); white-space: nowrap; margin-top: 1px;
-}
 
 .nav-links { display: flex; gap: .1rem; flex: 1; justify-content: center; flex-wrap: wrap; }
 .nav-links a {
@@ -529,8 +518,6 @@ html[lang="ne"] .admin-side .group { text-transform: none; letter-spacing: 0; fo
   border-top: 1px solid rgba(255, 255, 255, .13); margin-top: 1.4rem; padding-top: 1rem;
   display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; font-size: .8rem; color: #8ea7ca;
 }
-.footer .brand-name { color: #fff; }
-.footer .brand-tag { color: #8ea7ca; }
 @media (max-width: 760px) { .footer .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* ------------------------------- utilities -------------------------------- */
@@ -601,3 +588,18 @@ html[lang="ne"] .admin-side .group { text-transform: none; letter-spacing: 0; fo
   background: var(--red); color: #fff; font-size: .62rem; font-weight: 800;
   display: grid; place-items: center; border: 1.5px solid var(--surface);
 }
+
+/* --------------------------------- brand ---------------------------------- */
+
+.brand { display: inline-flex; align-items: center; }
+.brand:hover { text-decoration: none; }
+.brand-logo { height: auto; width: auto; max-height: 40px; object-fit: contain; }
+.brand-logo-dark { display: none; }
+:root[data-theme="dark"] .brand-logo-light { display: none; }
+:root[data-theme="dark"] .brand-logo-dark { display: block; }
+/* The footer is navy in both themes, so it always uses the dark-surface
+   artwork — the light lockup's navy wordmark would vanish against it. */
+.footer .brand-logo { max-height: 46px; }
+.footer .brand-logo-light { display: none; }
+.footer .brand-logo-dark { display: block; }
+@media (max-width: 480px) { .brand-logo { max-height: 32px; } }

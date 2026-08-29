@@ -1,23 +1,17 @@
 import Link from "next/link";
 import { getTranslator } from "@/lib/locale-server";
-import { FlagMark } from "./brand";
+import { Brand } from "./brand";
 
 export async function SiteFooter() {
-  const { t } = await getTranslator();
+  const { t, locale } = await getTranslator();
 
   return (
     <footer className="footer">
       <div className="wrap">
         <div className="cols">
           <div>
-            <div className="brand" style={{ marginBottom: ".5rem" }}>
-              <FlagMark size={30} />
-              <span className="brand-text">
-                <span className="brand-name" style={{ fontSize: "1.15rem" }}>
-                  Neta<em>Track</em>
-                </span>
-                <span className="brand-tag">{t("brand.tagline")}</span>
-              </span>
+            <div style={{ marginBottom: ".7rem" }}>
+              <Brand locale={locale} height={46} />
             </div>
             <p style={{ maxWidth: "34ch" }}>{t("footer.blurb")}</p>
             <p className="small" style={{ color: "#8ea7ca" }}>

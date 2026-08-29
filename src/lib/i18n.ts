@@ -27,7 +27,7 @@ export function isLocale(value: string | undefined | null): value is Locale {
 /** en is the source of truth for available keys; ne overrides it. */
 const en = {
   // ---- brand and navigation
-  "brand.tagline": "Information · Analysis · Transparency",
+  "brand.tagline": "Track · Analyze · Empower",
   "brand.statement": "Know. Vote. Track.",
   "nav.home": "Home",
   "nav.candidates": "Candidates",
