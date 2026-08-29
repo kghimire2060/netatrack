@@ -1,0 +1,61 @@
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { requireActor } from "@/lib/auth";
+import { can, permissionsForRole } from "@/lib/rbac";
+import { Card } from "@/components/ui";
+import { RolePermissionEditor } from "@/components/admin-forms";
+import { PERMISSIONS, SUPER_ADMIN_ONLY, type RoleName } from "@/lib/permissions";
+import { humanize } from "@/lib/format";
+
+export const metadata = { title: "Roles and permissions" };
+
+const ROLES: RoleName[] = ["SUPER_ADMIN", "ADMIN", "STAFF", "CITIZEN", "CANDIDATE", "RESEARCHER"];
+
+export default async function AdminRolesPage() {
+  const actor = await requireActor();
+  if (!(await can({ userId: actor.userId, role: actor.role }, "role.manage"))) redirect("/admin");
+
+  const granted = await Promise.all(
+    ROLES.map(async (role) => ({ role, permissions: [...(await permissionsForRole(role))] }))
+  );
+
+  const counts = await prisma.user.groupBy({ by: ["role"], _count: { _all: true } });
+  const catalog = Object.entries(PERMISSIONS).map(([key, description]) => ({ key, description }));
+
+  return (
+    <>
+      <h1>Roles and permissions</h1>
+      <p className="muted">
+        Authorization is enforced on the server for every action. Changes here take effect
+        immediately and are recorded in the audit log.
+      </p>
+
+      <div className="notice">
+        Two safeguards apply and cannot be bypassed from this screen: you can never grant a
+        permission you do not hold yourself, and{" "}
+        <code className="mono">{SUPER_ADMIN_ONLY.join(", ")}</code> stay exclusive to Super Admin.
+      </div>
+
+      <div className="stack" style={{ marginTop: "1rem" }}>
+        {granted.map(({ role, permissions }) => (
+          <Card
+            key={role}
+            title={`${humanize(role)} — ${permissions.length} permissions`}
+            action={
+              <span className="small faint">
+                {counts.find((row) => row.role === role)?._count._all ?? 0} accounts
+              </span>
+            }
+          >
+            <RolePermissionEditor
+              role={role}
+              granted={permissions}
+              catalog={catalog}
+              lockedPermissions={SUPER_ADMIN_ONLY}
+            />
+          </Card>
+        ))}
+      </div>
+    </>
+  );
+}

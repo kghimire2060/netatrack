@@ -1,0 +1,920 @@
+// ---------------------------------------------------------------------------
+// NetaTrack — Election & Citizen Accountability Platform
+// Data model for the full proposal (section 17: Database Structure).
+//
+// Conventions:
+//  - Every major record uses an internal UUID primary key.
+//  - Public-facing identifiers (trackingId, slug, reference) are SEPARATE
+//    unique fields so internal ids never leak and public ids stay stable.
+//  - Official election data and public-opinion data live in separate tables
+//    and are never merged in a single "score" column.
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------- Enums -------------------------------------
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+  CITIZEN
+  CANDIDATE
+  RESEARCHER
+}
+
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  LOCKED
+  DELETED
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ClaimStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum ComplaintStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  VERIFIED
+  ASSIGNED
+  ACKNOWLEDGED
+  IN_PROGRESS
+  AWAITING_RESPONSE
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum ElectionType {
+  FEDERAL
+  PROVINCIAL
+  LOCAL
+  BY_ELECTION
+  REFERENDUM
+}
+
+enum ElectionStatus {
+  UPCOMING
+  ACTIVE
+  COUNTING
+  COMPLETED
+  CANCELLED
+}
+
+enum NominationStatus {
+  DECLARED
+  NOMINATED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ContentStatus {
+  DRAFT
+  EDITORIAL_REVIEW
+  SOURCE_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum FactCheckVerdict {
+  TRUE
+  MOSTLY_TRUE
+  MISLEADING
+  FALSE
+  UNVERIFIED
+  INSUFFICIENT_EVIDENCE
+}
+
+enum PromiseStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+  CANCELLED
+  UNABLE_TO_VERIFY
+}
+
+enum PollStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum ModerationStatus {
+  VISIBLE
+  FLAGGED
+  HIDDEN
+  REMOVED
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+  PUSH
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENDING
+  SENT
+  FAILED
+}
+
+// --------------------- Identity, roles and permissions ----------------------
+
+model User {
+  id               String        @id @default(uuid())
+  email            String        @unique
+  passwordHash     String
+  fullName         String
+  phone            String?
+  avatarUrl        String?
+  locale           String        @default("en")
+  role             Role          @default(CITIZEN)
+  status           AccountStatus @default(PENDING)
+  emailVerified    Boolean       @default(false)
+  mfaEnabled       Boolean       @default(false)
+  mfaSecret        String?
+  failedLoginCount Int           @default(0)
+  lockedUntil      DateTime?
+  lastLoginAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  // researcher approval (section 14)
+  researcherApproved Boolean   @default(false)
+  researcherNote     String?
+  approvedAt         DateTime?
+
+  sessions            Session[]
+  verificationTokens  VerificationToken[]
+  permissionOverrides UserPermissionOverride[]
+
+  candidateProfile Candidate?  @relation("CandidateAccount")
+  claims           CandidateClaim[] @relation("ClaimRequester")
+  claimsReviewed   CandidateClaim[] @relation("ClaimReviewer")
+
+  complaints         Complaint[]      @relation("ComplaintReporter")
+  complaintsAssigned Complaint[]      @relation("ComplaintAssignee")
+  complaintsVerified Complaint[]      @relation("ComplaintVerifier")
+  complaintEvents    ComplaintEvent[]
+  attachments        ComplaintAttachment[]
+
+  ratings       Rating[]
+  ratingReports RatingReport[]
+  pollVotes     PollVote[]
+
+  newsAuthored  NewsArticle[]  @relation("NewsAuthor")
+  newsRevisions NewsRevision[]
+  factChecksReviewed FactCheck[] @relation("FactCheckReviewer")
+  factChecksEdited   FactCheck[] @relation("FactCheckEditor")
+  promiseUpdates PromiseUpdate[]
+  candidateSources CandidateSource[]
+
+  notifications Notification[]
+  auditLogs     AuditLog[]
+  apiKeys       ApiKey[]
+  exportLogs    ExportLog[]
+
+  @@index([role, status])
+}
+
+/// Editable role -> permission mapping. The permission *catalog* lives in code
+/// (src/lib/permissions.ts); this table is what authorization actually reads,
+/// so admins can re-scope a role without a deploy.
+model RolePermission {
+  id         String @id @default(uuid())
+  role       Role
+  permission String
+
+  @@unique([role, permission])
+  @@index([role])
+}
+
+/// Per-user grant or revoke that wins over the role mapping.
+model UserPermissionOverride {
+  id         String  @id @default(uuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission String
+  granted    Boolean @default(true)
+  reason     String?
+
+  @@unique([userId, permission])
+}
+
+/// Server-side session registry — enables "log out all devices" and
+/// revocation of a stolen token before its JWT expiry.
+model Session {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jti       String    @unique
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  @@index([userId])
+}
+
+enum TokenPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model VerificationToken {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String       @unique
+  purpose   TokenPurpose
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime     @default(now())
+
+  @@index([userId, purpose])
+}
+
+// ------------------- Geography, parties and candidates ----------------------
+
+model Party {
+  id         String  @id @default(uuid())
+  slug       String  @unique
+  name       String  @unique
+  shortName  String?
+  symbolUrl  String?
+  colorHex   String?
+  foundedYear Int?
+  ideology   String?
+  website    String?
+  description String?
+
+  candidates  Candidate[]
+  candidacies Candidacy[]
+  results     Result[]
+  manifestos  Manifesto[]
+}
+
+model Constituency {
+  id         String  @id @default(uuid())
+  slug       String  @unique
+  code       String? @unique
+  name       String
+  province   String
+  district   String
+  registeredVoters Int?
+  majorIssues      String?
+
+  candidates      Candidate[]
+  candidacies     Candidacy[]
+  pollingStations PollingStation[]
+  results         Result[]
+  complaints      Complaint[]
+  promises        Promise[]
+
+  @@unique([name, district])
+  @@index([province, district])
+}
+
+model PollingStation {
+  id             String       @id @default(uuid())
+  name           String
+  code           String?      @unique
+  address        String?
+  registeredVoters Int?
+  constituencyId String
+  constituency   Constituency @relation(fields: [constituencyId], references: [id], onDelete: Cascade)
+
+  @@index([constituencyId])
+}
+
+model Candidate {
+  id                 String             @id @default(uuid())
+  slug               String             @unique
+  fullName           String
+  photoUrl           String?
+  biography          String?
+  education          String?
+  experience         String?
+  previousPositions  String?
+  agenda             String?
+  keyIssues          String?
+  dateOfBirth        DateTime?
+  gender             String?
+  socialLinks        Json?
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedAt         DateTime?
+  isIncumbent        Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  partyId        String?
+  party          Party?        @relation(fields: [partyId], references: [id])
+  constituencyId String?
+  constituency   Constituency? @relation(fields: [constituencyId], references: [id])
+
+  /// Set only after an approved claim (section 6). A candidate account may edit
+  /// permitted profile fields — never verification records or fact-checks.
+  accountId String? @unique
+  account   User?   @relation("CandidateAccount", fields: [accountId], references: [id])
+
+  candidacies  Candidacy[]
+  results      Result[]
+  ratings      Rating[]
+  claims       CandidateClaim[]
+  sources      CandidateSource[]
+  documents    CandidateDocument[]
+  manifestos   Manifesto[]
+  promises     Promise[]
+  performance  PerformanceRecord[]
+  factChecks   FactCheck[]
+
+  @@index([partyId])
+  @@index([constituencyId])
+  @@index([verificationStatus])
+}
+
+/// Provenance for every editorial claim on a candidate profile (section 18).
+model CandidateSource {
+  id          String   @id @default(uuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  field       String?
+  label       String
+  url         String?
+  note        String?
+  addedById   String?
+  addedBy     User?    @relation(fields: [addedById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([candidateId])
+}
+
+model CandidateDocument {
+  id          String    @id @default(uuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  title       String
+  fileUrl     String
+  mimeType    String?
+  isPublic    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([candidateId])
+}
+
+model CandidateClaim {
+  id           String      @id @default(uuid())
+  reference    String      @unique
+  candidateId  String
+  candidate    Candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  requesterId  String
+  requester    User        @relation("ClaimRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  evidenceUrl  String?
+  statement    String?
+  status       ClaimStatus @default(SUBMITTED)
+  reviewerId   String?
+  reviewer     User?       @relation("ClaimReviewer", fields: [reviewerId], references: [id])
+  reviewNote   String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([status])
+  @@index([candidateId])
+}
+
+// ---------------------- Elections, candidacy and results --------------------
+
+model Election {
+  id          String         @id @default(uuid())
+  slug        String         @unique
+  name        String
+  type        ElectionType
+  year        Int
+  status      ElectionStatus @default(UPCOMING)
+  electionDate DateTime?
+  description String?
+  totalSeats  Int?
+  sourceName  String?
+  sourceUrl   String?
+  createdAt   DateTime       @default(now())
+
+  candidacies Candidacy[]
+  results     Result[]
+  events      ElectionEvent[]
+  manifestos  Manifesto[]
+
+  @@index([status, year])
+}
+
+/// Election calendar entries (nomination opens, campaign silence, polling day…).
+model ElectionEvent {
+  id         String   @id @default(uuid())
+  electionId String
+  election   Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  title      String
+  detail     String?
+  startsAt   DateTime
+  endsAt     DateTime?
+
+  @@index([electionId, startsAt])
+}
+
+/// A candidate standing in one constituency of one election.
+model Candidacy {
+  id               String           @id @default(uuid())
+  electionId       String
+  election         Election         @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  candidateId      String
+  candidate        Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  constituencyId   String
+  constituency     Constituency     @relation(fields: [constituencyId], references: [id])
+  partyId          String?
+  party            Party?           @relation(fields: [partyId], references: [id])
+  symbol           String?
+  nominationStatus NominationStatus @default(NOMINATED)
+  nominatedAt      DateTime?
+
+  @@unique([electionId, candidateId, constituencyId])
+  @@index([electionId, constituencyId])
+}
+
+/// OFFICIAL results only. Public-opinion ratings live in `Rating` and must
+/// never be rendered as, or joined into, an official result (section 11).
+model Result {
+  id             String             @id @default(uuid())
+  electionId     String
+  election       Election           @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  constituencyId String
+  constituency   Constituency       @relation(fields: [constituencyId], references: [id])
+  candidateId    String
+  candidate      Candidate          @relation(fields: [candidateId], references: [id])
+  partyId        String?
+  party          Party?             @relation(fields: [partyId], references: [id])
+  votes          Int
+  voteShare      Float?
+  isWinner       Boolean            @default(false)
+  totalVotesCast Int?
+  turnoutPct     Float?
+  status         VerificationStatus @default(PENDING)
+  sourceName     String?
+  sourceUrl      String?
+  publishedAt    DateTime?
+  updatedAt      DateTime           @updatedAt
+
+  @@unique([electionId, constituencyId, candidateId])
+  @@index([electionId, constituencyId])
+}
+
+// --------------------- Public opinion: ratings and polls --------------------
+
+/// Six weighted dimensions from section 7. `weightedScore` is derived and
+/// stored for query performance; the weights are published in the methodology.
+model Rating {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidateId    String
+  candidate      Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  publicTrust     Int
+  communication   Int
+  localIssueFocus Int
+  policyClarity   Int
+  responsiveness  Int
+  overall         Int
+  weightedScore  Float
+  comment        String?
+  status         ModerationStatus @default(VISIBLE)
+  moderationNote String?
+  ipHash         String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  reports RatingReport[]
+
+  @@unique([userId, candidateId])
+  @@index([candidateId, status])
+}
+
+model RatingReport {
+  id         String           @id @default(uuid())
+  ratingId   String
+  rating     Rating           @relation(fields: [ratingId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter   User             @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  reason     String
+  resolved   Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  @@unique([ratingId, reporterId])
+}
+
+model Poll {
+  id          String     @id @default(uuid())
+  slug        String     @unique
+  question    String
+  description String?
+  status      PollStatus @default(DRAFT)
+  multiChoice Boolean    @default(false)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime   @default(now())
+
+  options PollOption[]
+  votes   PollVote[]
+
+  @@index([status])
+}
+
+model PollOption {
+  id     String @id @default(uuid())
+  pollId String
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label  String
+  order  Int    @default(0)
+
+  votes PollVote[]
+}
+
+model PollVote {
+  id        String     @id @default(uuid())
+  pollId    String
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId  String
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@unique([pollId, userId])
+  @@index([optionId])
+}
+
+// ------------------- Citizen complaints and issue tracking ------------------
+
+model Complaint {
+  id          String          @id @default(uuid())
+  /// Public identifier shown to citizens, e.g. NT-ISSUE-00018452.
+  trackingId  String          @unique
+  title       String
+  description String
+  category    String
+  priority    Priority        @default(NORMAL)
+  status      ComplaintStatus @default(SUBMITTED)
+
+  province       String?
+  district       String?
+  locationDetail String?
+  constituencyId String?
+  constituency   Constituency? @relation(fields: [constituencyId], references: [id])
+
+  /// Reporter is optional: anonymous reports are allowed, in which case
+  /// contactEmail (if given) is used only for lifecycle notifications.
+  reporterId   String?
+  reporter     User?   @relation("ComplaintReporter", fields: [reporterId], references: [id])
+  contactEmail String?
+
+  assignedToId String?
+  assignedTo   User?   @relation("ComplaintAssignee", fields: [assignedToId], references: [id])
+  department   String?
+
+  verifiedById String?
+  verifiedBy   User?   @relation("ComplaintVerifier", fields: [verifiedById], references: [id])
+  verifiedAt   DateTime?
+
+  expectedUpdateAt DateTime?
+  /// Shown on the public tracking page.
+  publicResponse   String?
+  /// NEVER returned by any public endpoint.
+  internalNotes    String?
+  resolutionNote   String?
+  resolvedAt       DateTime?
+  closedAt         DateTime?
+
+  citizenFeedback String?
+  citizenRating   Int?
+  reopenRequested Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events      ComplaintEvent[]
+  attachments ComplaintAttachment[]
+
+  @@index([status, createdAt])
+  @@index([assignedToId, status])
+  @@index([category])
+}
+
+model ComplaintEvent {
+  id           String          @id @default(uuid())
+  complaintId  String
+  complaint    Complaint       @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  status       ComplaintStatus
+  actorId      String?
+  actor        User?           @relation(fields: [actorId], references: [id])
+  actorLabel   String
+  publicUpdate String?
+  internalNote String?
+  isPublic     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+
+  attachments ComplaintAttachment[]
+
+  @@index([complaintId, createdAt])
+}
+
+model ComplaintAttachment {
+  id           String          @id @default(uuid())
+  complaintId  String
+  complaint    Complaint       @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  eventId      String?
+  event        ComplaintEvent? @relation(fields: [eventId], references: [id])
+  fileName     String
+  fileUrl      String
+  mimeType     String?
+  sizeBytes    Int?
+  isPublic     Boolean         @default(false)
+  uploadedById String?
+  uploadedBy   User?           @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime        @default(now())
+
+  @@index([complaintId])
+}
+
+// ------------- Accountability: manifestos, promises, performance ------------
+
+model Manifesto {
+  id          String   @id @default(uuid())
+  title       String
+  summary     String?
+  sourceUrl   String?
+  publishedAt DateTime?
+  partyId     String?
+  party       Party?     @relation(fields: [partyId], references: [id])
+  candidateId String?
+  candidate   Candidate? @relation(fields: [candidateId], references: [id])
+  electionId  String?
+  election    Election?  @relation(fields: [electionId], references: [id])
+  createdAt   DateTime   @default(now())
+
+  promises Promise[]
+}
+
+model Promise {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  category    String?
+  status      PromiseStatus @default(NOT_STARTED)
+  evidenceUrl String?
+  evidenceNote String?
+  targetDate  DateTime?
+  lastUpdateAt DateTime     @default(now())
+  createdAt   DateTime      @default(now())
+
+  manifestoId    String?
+  manifesto      Manifesto?    @relation(fields: [manifestoId], references: [id])
+  candidateId    String?
+  candidate      Candidate?    @relation(fields: [candidateId], references: [id])
+  constituencyId String?
+  constituency   Constituency? @relation(fields: [constituencyId], references: [id])
+
+  updates PromiseUpdate[]
+
+  @@index([status])
+  @@index([candidateId])
+}
+
+model PromiseUpdate {
+  id          String        @id @default(uuid())
+  promiseId   String
+  promise     Promise       @relation(fields: [promiseId], references: [id], onDelete: Cascade)
+  status      PromiseStatus
+  note        String?
+  evidenceUrl String?
+  actorId     String?
+  actor       User?         @relation(fields: [actorId], references: [id])
+  createdAt   DateTime      @default(now())
+
+  @@index([promiseId, createdAt])
+}
+
+/// Objective, source-backed activity records (section 12). Kept apart from
+/// perception-based `Rating` data by design.
+model PerformanceRecord {
+  id          String    @id @default(uuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  periodLabel String
+  periodStart DateTime?
+  periodEnd   DateTime?
+  attendancePct        Float?
+  questionsAsked       Int?
+  billsSponsored       Int?
+  committeeMeetings    Int?
+  constituencyActivities Int?
+  issueResponses       Int?
+  sourceName  String?
+  sourceUrl   String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([candidateId, periodLabel])
+}
+
+// ------------------- News, fact-checking, content governance ----------------
+
+model NewsArticle {
+  id          String        @id @default(uuid())
+  slug        String        @unique
+  title       String
+  excerpt     String?
+  body        String
+  category    String?
+  coverUrl    String?
+  status      ContentStatus @default(DRAFT)
+  publishedAt DateTime?
+  views       Int           @default(0)
+  sources     String?
+  authorId    String?
+  author      User?         @relation("NewsAuthor", fields: [authorId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  revisions  NewsRevision[]
+  factChecks FactCheck[]
+
+  @@index([status, publishedAt])
+}
+
+/// Visible correction history (section 13) — corrections never overwrite.
+model NewsRevision {
+  id        String   @id @default(uuid())
+  articleId String
+  article   NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  editorId  String?
+  editor    User?    @relation(fields: [editorId], references: [id])
+  summary   String
+  isCorrection Boolean @default(false)
+  bodySnapshot String?
+  createdAt DateTime @default(now())
+
+  @@index([articleId, createdAt])
+}
+
+model FactCheck {
+  id          String           @id @default(uuid())
+  slug        String           @unique
+  claim       String
+  claimant    String?
+  claimDate   DateTime?
+  claimSource String?
+  verdict     FactCheckVerdict @default(UNVERIFIED)
+  summary     String?
+  analysis    String?
+  status      ContentStatus    @default(DRAFT)
+  publishedAt DateTime?
+
+  candidateId String?
+  candidate   Candidate?   @relation(fields: [candidateId], references: [id])
+  articleId   String?
+  article     NewsArticle? @relation(fields: [articleId], references: [id])
+
+  reviewerId String?
+  reviewer   User?   @relation("FactCheckReviewer", fields: [reviewerId], references: [id])
+  editorId   String?
+  editor     User?   @relation("FactCheckEditor", fields: [editorId], references: [id])
+
+  /// Subject's right of reply — attached, never overwriting the verdict.
+  subjectResponse String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  evidence FactCheckEvidence[]
+
+  @@index([status, publishedAt])
+}
+
+model FactCheckEvidence {
+  id          String    @id @default(uuid())
+  factCheckId String
+  factCheck   FactCheck @relation(fields: [factCheckId], references: [id], onDelete: Cascade)
+  label       String
+  url         String?
+  note        String?
+
+  @@index([factCheckId])
+}
+
+// ----------------- Notifications, audit, settings, research -----------------
+
+model Notification {
+  id          String              @id @default(uuid())
+  userId      String?
+  user        User?               @relation(fields: [userId], references: [id])
+  toEmail     String?
+  channel     NotificationChannel @default(EMAIL)
+  type        String
+  subject     String
+  body        String
+  status      NotificationStatus  @default(QUEUED)
+  attempts    Int                 @default(0)
+  error       String?
+  relatedType String?
+  relatedId   String?
+  readAt      DateTime?
+  sentAt      DateTime?
+  createdAt   DateTime            @default(now())
+
+  @@index([status, createdAt])
+  @@index([userId, readAt])
+}
+
+/// Append-only in practice: the API only ever inserts.
+model AuditLog {
+  id            String   @id @default(uuid())
+  actorId       String?
+  actor         User?    @relation(fields: [actorId], references: [id])
+  actorRole     Role?
+  action        String
+  targetType    String?
+  targetId      String?
+  result        String   @default("SUCCESS")
+  changeSummary String?
+  ip            String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+}
+
+model Setting {
+  key         String   @id
+  value       Json
+  category    String   @default("general")
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+/// Researcher API credential. Only the hash is stored.
+model ApiKey {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  prefix     String    @unique
+  keyHash    String
+  scopes     String
+  rateLimit  Int       @default(60)
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// Every dataset export is audited (section 14).
+model ExportLog {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dataset  String
+  filters  Json?
+  rowCount Int
+  format   String   @default("csv")
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}

@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+
+# next.js build output
+.next/
+out/
+next-env.d.ts
+
+# typescript incremental build cache
+*.tsbuildinfo
+
+# environment — NEVER commit real credentials
+.env
+.env.local
+.env.*.local
+.env.production
+
+# local uploads
+public/uploads/
+
+# logs and OS noise
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# editors
+.idea/
+.vscode/

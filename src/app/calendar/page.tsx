@@ -1,0 +1,69 @@
+import Link from "next/link";
+import { prisma } from "@/lib/db";
+import { Card, EmptyState } from "@/components/ui";
+import { ElectionBadge } from "@/components/status";
+import { formatDate } from "@/lib/format";
+
+export const metadata = { title: "Election calendar" };
+
+export default async function CalendarPage() {
+  const now = new Date();
+  const events = await prisma.electionEvent.findMany({
+    orderBy: { startsAt: "asc" },
+    include: { election: { select: { name: true, slug: true, status: true } } },
+  });
+
+  const upcoming = events.filter((event) => (event.endsAt ?? event.startsAt) >= now);
+  const past = events.filter((event) => (event.endsAt ?? event.startsAt) < now).reverse();
+
+  return (
+    <div className="wrap section">
+      <h1>Election calendar</h1>
+      <p className="muted">
+        Nomination windows, campaign periods, polling days and counting milestones across all
+        recorded elections.
+      </p>
+
+      <div className="grid grid-sidebar">
+        <Card title="Upcoming">
+          {upcoming.length === 0 ? (
+            <EmptyState title="No upcoming scheduled events" />
+          ) : (
+            <ul className="timeline">
+              {upcoming.map((event) => (
+                <li key={event.id}>
+                  <div className="when">
+                    {formatDate(event.startsAt)}
+                    {event.endsAt ? ` – ${formatDate(event.endsAt)}` : ""}
+                  </div>
+                  <div className="what">{event.title}</div>
+                  <div className="small muted">
+                    <Link href={`/elections/${event.election.slug}`}>{event.election.name}</Link>{" "}
+                    <ElectionBadge status={event.election.status} />
+                  </div>
+                  {event.detail ? <p className="small muted" style={{ margin: ".2rem 0 0" }}>{event.detail}</p> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card title="Past events">
+          {past.length === 0 ? (
+            <p className="small muted">Nothing recorded yet.</p>
+          ) : (
+            <ul className="timeline">
+              {past.slice(0, 20).map((event) => (
+                <li key={event.id} className="is-muted">
+                  <div className="when">{formatDate(event.startsAt)}</div>
+                  <div className="what">{event.title}</div>
+                  <div className="small muted">{event.election.name}</div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}

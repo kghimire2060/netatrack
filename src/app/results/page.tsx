@@ -1,0 +1,203 @@
+import Link from "next/link";
+import { prisma } from "@/lib/db";
+import { Badge, Card, EmptyState, Meter, Stat } from "@/components/ui";
+import { formatDateTime, formatNumber, formatPercent, humanize } from "@/lib/format";
+
+export const metadata = { title: "Results" };
+
+/** Official result dashboard (section 11). */
+export default async function ResultsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ election?: string }>;
+}) {
+  const params = await searchParams;
+
+  const elections = await prisma.election.findMany({
+    orderBy: [{ year: "desc" }],
+    select: { slug: true, name: true, year: true, status: true, totalSeats: true, sourceName: true, sourceUrl: true },
+  });
+
+  const selectedSlug = params.election ?? elections[0]?.slug;
+  const election = selectedSlug
+    ? await prisma.election.findUnique({
+        where: { slug: selectedSlug },
+        select: { id: true, name: true, status: true, totalSeats: true, sourceName: true, sourceUrl: true },
+      })
+    : null;
+
+  const results = election
+    ? await prisma.result.findMany({
+        where: { electionId: election.id, status: "VERIFIED" },
+        include: {
+          candidate: { select: { fullName: true, slug: true } },
+          party: { select: { name: true, shortName: true, colorHex: true } },
+          constituency: { select: { name: true, district: true, slug: true } },
+        },
+        orderBy: [{ isWinner: "desc" }, { votes: "desc" }],
+      })
+    : [];
+
+  const winners = results.filter((result) => result.isWinner);
+  const byParty = new Map<string, number>();
+  for (const winner of winners) {
+    const name = winner.party?.shortName ?? winner.party?.name ?? "Independent";
+    byParty.set(name, (byParty.get(name) ?? 0) + 1);
+  }
+  const partySeats = [...byParty.entries()].sort((a, b) => b[1] - a[1]);
+
+  const totalVotes = results.reduce((sum, result) => sum + result.votes, 0);
+  const turnouts = results.map((r) => r.turnoutPct).filter((v): v is number => v !== null);
+  const averageTurnout =
+    turnouts.length > 0 ? turnouts.reduce((sum, value) => sum + value, 0) / turnouts.length : null;
+  const lastUpdated = results.reduce<Date | null>(
+    (latest, result) => (!latest || result.updatedAt > latest ? result.updatedAt : latest),
+    null
+  );
+
+  return (
+    <div className="wrap section">
+      <h1>Election results</h1>
+      <p className="muted">
+        Official results only. Public opinion and candidate ratings are stored and displayed
+        separately, and are never presented as election outcomes.
+      </p>
+
+      {elections.length === 0 ? (
+        <Card>
+          <EmptyState title="No elections recorded yet" />
+        </Card>
+      ) : (
+        <>
+          <div className="chip-row" style={{ marginBottom: "1rem" }}>
+            {elections.map((item) => (
+              <Link
+                key={item.slug}
+                href={`/results?election=${item.slug}`}
+                className={`chip${item.slug === selectedSlug ? " active" : ""}`}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </div>
+
+          {election ? (
+            <>
+              <div className="grid grid-4">
+                <Stat label="Total seats" value={formatNumber(election.totalSeats)} />
+                <Stat label="Seats declared" value={formatNumber(winners.length)} accent="green" />
+                <Stat label="Votes counted" value={formatNumber(totalVotes)} />
+                <Stat
+                  label="Average turnout"
+                  value={averageTurnout === null ? "—" : formatPercent(averageTurnout)}
+                  accent="orange"
+                />
+              </div>
+
+              <div className="notice notice-blue" style={{ marginTop: "1rem" }}>
+                <strong>Counting status: {humanize(election.status)}.</strong> Source:{" "}
+                {election.sourceName ?? "not recorded"}
+                {election.sourceUrl ? (
+                  <>
+                    {" "}
+                    (<a href={election.sourceUrl} target="_blank" rel="noopener noreferrer nofollow">link</a>)
+                  </>
+                ) : null}
+                . Last updated {formatDateTime(lastUpdated)}.
+              </div>
+
+              <div className="grid grid-sidebar" style={{ marginTop: "1rem" }}>
+                <Card title="Declared results">
+                  {results.length === 0 ? (
+                    <EmptyState title="No verified results published for this election yet" />
+                  ) : (
+                    <div className="table-wrap">
+                      <table className="data responsive">
+                        <thead>
+                          <tr>
+                            <th>Constituency</th>
+                            <th>Candidate</th>
+                            <th>Party</th>
+                            <th className="num">Votes</th>
+                            <th>Vote share</th>
+                            <th className="num">Turnout</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {results.map((result) => (
+                            <tr key={result.id}>
+                              <td data-label="Constituency">
+                                <Link href={`/constituencies/${result.constituency.slug}`}>
+                                  {result.constituency.name}
+                                </Link>
+                                <div className="small faint">{result.constituency.district}</div>
+                              </td>
+                              <td data-label="Candidate">
+                                <Link href={`/candidates/${result.candidate.slug}`}>
+                                  {result.candidate.fullName}
+                                </Link>
+                                {result.isWinner ? (
+                                  <>
+                                    {" "}
+                                    <Badge tone="good">Elected</Badge>
+                                  </>
+                                ) : null}
+                              </td>
+                              <td data-label="Party">
+                                {result.party?.shortName ?? result.party?.name ?? "Independent"}
+                              </td>
+                              <td className="num" data-label="Votes">
+                                {formatNumber(result.votes)}
+                              </td>
+                              <td data-label="Vote share">
+                                <div className="row" style={{ gap: ".4rem" }}>
+                                  <span className="small" style={{ minWidth: "3.2rem" }}>
+                                    {formatPercent(result.voteShare)}
+                                  </span>
+                                  <span style={{ flex: 1, minWidth: "70px" }}>
+                                    <Meter
+                                      value={result.voteShare ?? 0}
+                                      tone={result.isWinner ? "good" : undefined}
+                                    />
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="num" data-label="Turnout">
+                                {formatPercent(result.turnoutPct)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </Card>
+
+                <aside className="stack">
+                  <Card title="Seats by party">
+                    {partySeats.length === 0 ? (
+                      <p className="small muted">No seats declared yet.</p>
+                    ) : (
+                      partySeats.map(([party, seats]) => (
+                        <div className="bar-row" key={party} style={{ marginBottom: ".4rem" }}>
+                          <span className="small">{party}</span>
+                          <Meter value={seats} max={winners.length} />
+                          <span className="small faint">{seats}</span>
+                        </div>
+                      ))
+                    )}
+                  </Card>
+
+                  <div className="notice">
+                    NetaTrack is not an election authority. Where an official figure differs from
+                    what is shown here, the authority&apos;s published record is definitive.
+                  </div>
+                </aside>
+              </div>
+            </>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
