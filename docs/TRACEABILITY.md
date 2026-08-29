@@ -9,7 +9,7 @@ Status key: **Done** · **Partial** (works, with a stated gap) · **Not built**
 |---|---|---|---|
 | 1 | Continuous civic platform, not only a results portal | Done | Pre/during/post-election surfaces: `/candidates`, `/results`, `/promises`, `/track` |
 | 2 | In-scope module list | Partial | All web modules built; Flutter apps not built (§19) |
-| 3 | Brand palette, components, responsive cards, states | Done | `src/app/globals.css`, `src/components/ui.tsx`. Tables collapse to cards under 720px; empty, loading, error and permission-denied states present |
+| 3 | Brand palette, components, responsive cards, states | Done | `src/app/globals.css`, `src/components/ui.tsx`. Tables collapse to cards under 720px. Empty states via `EmptyState`; branded `not-found.tsx` and `error.tsx` (plus an admin-scoped boundary); pending states on every form; route skeletons on segments that cannot 404; permission-denied handled by redirect to login or `/account` |
 | 3 | Main navigation | Partial | `src/components/site-nav.tsx` — all eleven proposed links plus a search box (`/search`), a notification indicator (`/account/notifications`) and login/profile controls. Language switching is not built: the app is English-only, with `User.locale` in place for a later Nepali layer |
 | 4 | Six roles | Done | `Role` enum; `src/lib/permissions.ts` |
 | 4 | Register → validate → duplicate check → pending → token → SMTP → verify → activate → log | Done | `src/app/api/auth/register`, `/verify` |
