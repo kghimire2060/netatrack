@@ -27,3 +27,10 @@ Thumbs.db
 # editors
 .idea/
 .vscode/
+
+# vercel
+.vercel
+.env.local
+
+# keep the template tracked
+!.env.example

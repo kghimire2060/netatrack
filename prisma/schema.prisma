@@ -86,6 +86,21 @@ enum ElectionStatus {
   CANCELLED
 }
 
+/// Tier of a constituency or candidacy. Nepal runs federal and provincial
+/// constituencies over the same geography, so both coexist.
+enum GovernmentLevel {
+  FEDERAL
+  PROVINCIAL
+  LOCAL
+}
+
+enum IssueStatus {
+  RAISED
+  ONGOING
+  PRIORITY
+  RESOLVED
+}
+
 enum NominationStatus {
   DECLARED
   NOMINATED
@@ -178,13 +193,13 @@ model User {
   verificationTokens  VerificationToken[]
   permissionOverrides UserPermissionOverride[]
 
-  candidateProfile Candidate?  @relation("CandidateAccount")
+  candidateProfile Candidate?       @relation("CandidateAccount")
   claims           CandidateClaim[] @relation("ClaimRequester")
   claimsReviewed   CandidateClaim[] @relation("ClaimReviewer")
 
-  complaints         Complaint[]      @relation("ComplaintReporter")
-  complaintsAssigned Complaint[]      @relation("ComplaintAssignee")
-  complaintsVerified Complaint[]      @relation("ComplaintVerifier")
+  complaints         Complaint[]           @relation("ComplaintReporter")
+  complaintsAssigned Complaint[]           @relation("ComplaintAssignee")
+  complaintsVerified Complaint[]           @relation("ComplaintVerifier")
   complaintEvents    ComplaintEvent[]
   attachments        ComplaintAttachment[]
 
@@ -192,12 +207,12 @@ model User {
   ratingReports RatingReport[]
   pollVotes     PollVote[]
 
-  newsAuthored  NewsArticle[]  @relation("NewsAuthor")
-  newsRevisions NewsRevision[]
-  factChecksReviewed FactCheck[] @relation("FactCheckReviewer")
-  factChecksEdited   FactCheck[] @relation("FactCheckEditor")
-  promiseUpdates PromiseUpdate[]
-  candidateSources CandidateSource[]
+  newsAuthored       NewsArticle[]     @relation("NewsAuthor")
+  newsRevisions      NewsRevision[]
+  factChecksReviewed FactCheck[]       @relation("FactCheckReviewer")
+  factChecksEdited   FactCheck[]       @relation("FactCheckEditor")
+  promiseUpdates     PromiseUpdate[]
+  candidateSources   CandidateSource[]
 
   notifications Notification[]
   auditLogs     AuditLog[]
@@ -268,15 +283,15 @@ model VerificationToken {
 // ------------------- Geography, parties and candidates ----------------------
 
 model Party {
-  id         String  @id @default(uuid())
-  slug       String  @unique
-  name       String  @unique
-  shortName  String?
-  symbolUrl  String?
-  colorHex   String?
+  id          String  @id @default(uuid())
+  slug        String  @unique
+  name        String  @unique
+  shortName   String?
+  symbolUrl   String?
+  colorHex    String?
   foundedYear Int?
-  ideology   String?
-  website    String?
+  ideology    String?
+  website     String?
   description String?
 
   candidates  Candidate[]
@@ -286,14 +301,32 @@ model Party {
 }
 
 model Constituency {
-  id         String  @id @default(uuid())
-  slug       String  @unique
-  code       String? @unique
-  name       String
-  province   String
-  district   String
+  id               String  @id @default(uuid())
+  slug             String  @unique
+  code             String? @unique
+  name             String
+  province         String
+  district         String
   registeredVoters Int?
   majorIssues      String?
+
+  level               GovernmentLevel @default(FEDERAL)
+  /// Constituency number within its district, e.g. the 1 in Kathmandu-1.
+  number              Int?
+  wards               Int?
+  /// Provincial sub-segment label (A/B) where a federal seat is split.
+  segment             String?
+  /// Count published by the authority, which can differ from the rows in
+  /// `pollingStations` while data entry is incomplete.
+  pollingStationCount Int?
+
+  /// A provincial constituency nests inside its federal parent.
+  parentId String?
+  parent   Constituency?  @relation("ConstituencyNesting", fields: [parentId], references: [id])
+  children Constituency[] @relation("ConstituencyNesting")
+
+  issues            ConstituencyIssue[]
+  historicalResults HistoricalResult[]
 
   candidates      Candidate[]
   candidacies     Candidacy[]
@@ -307,13 +340,16 @@ model Constituency {
 }
 
 model PollingStation {
-  id             String       @id @default(uuid())
-  name           String
-  code           String?      @unique
-  address        String?
+  id               String       @id @default(uuid())
+  name             String
+  code             String?      @unique
+  address          String?
+  /// Wards this station serves, e.g. "Ward 1–3".
+  wardRange        String?
+  booths           Int?
   registeredVoters Int?
-  constituencyId String
-  constituency   Constituency @relation(fields: [constituencyId], references: [id], onDelete: Cascade)
+  constituencyId   String
+  constituency     Constituency @relation(fields: [constituencyId], references: [id], onDelete: Cascade)
 
   @@index([constituencyId])
 }
@@ -335,6 +371,14 @@ model Candidate {
   verificationStatus VerificationStatus @default(PENDING)
   verifiedAt         DateTime?
   isIncumbent        Boolean            @default(false)
+  /// Standing without a party affiliation.
+  isIndependent      Boolean            @default(false)
+  level              GovernmentLevel    @default(FEDERAL)
+  /// Parliamentary or party office held, e.g. "Chief Whip".
+  office             String?
+  /// Proportional-representation group, where the seat is a PR seat.
+  prGroup            String?
+  termsServed        Int?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -348,16 +392,16 @@ model Candidate {
   accountId String? @unique
   account   User?   @relation("CandidateAccount", fields: [accountId], references: [id])
 
-  candidacies  Candidacy[]
-  results      Result[]
-  ratings      Rating[]
-  claims       CandidateClaim[]
-  sources      CandidateSource[]
-  documents    CandidateDocument[]
-  manifestos   Manifesto[]
-  promises     Promise[]
-  performance  PerformanceRecord[]
-  factChecks   FactCheck[]
+  candidacies Candidacy[]
+  results     Result[]
+  ratings     Rating[]
+  claims      CandidateClaim[]
+  sources     CandidateSource[]
+  documents   CandidateDocument[]
+  manifestos  Manifesto[]
+  promises    Promise[]
+  performance PerformanceRecord[]
+  factChecks  FactCheck[]
 
   @@index([partyId])
   @@index([constituencyId])
@@ -366,7 +410,7 @@ model Candidate {
 
 /// Provenance for every editorial claim on a candidate profile (section 18).
 model CandidateSource {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   candidateId String
   candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   field       String?
@@ -374,8 +418,8 @@ model CandidateSource {
   url         String?
   note        String?
   addedById   String?
-  addedBy     User?    @relation(fields: [addedById], references: [id])
-  createdAt   DateTime @default(now())
+  addedBy     User?     @relation(fields: [addedById], references: [id])
+  createdAt   DateTime  @default(now())
 
   @@index([candidateId])
 }
@@ -394,20 +438,20 @@ model CandidateDocument {
 }
 
 model CandidateClaim {
-  id           String      @id @default(uuid())
-  reference    String      @unique
-  candidateId  String
-  candidate    Candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  requesterId  String
-  requester    User        @relation("ClaimRequester", fields: [requesterId], references: [id], onDelete: Cascade)
-  evidenceUrl  String?
-  statement    String?
-  status       ClaimStatus @default(SUBMITTED)
-  reviewerId   String?
-  reviewer     User?       @relation("ClaimReviewer", fields: [reviewerId], references: [id])
-  reviewNote   String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id          String      @id @default(uuid())
+  reference   String      @unique
+  candidateId String
+  candidate   Candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  requesterId String
+  requester   User        @relation("ClaimRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  evidenceUrl String?
+  statement   String?
+  status      ClaimStatus @default(SUBMITTED)
+  reviewerId  String?
+  reviewer    User?       @relation("ClaimReviewer", fields: [reviewerId], references: [id])
+  reviewNote  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   @@index([status])
   @@index([candidateId])
@@ -416,18 +460,22 @@ model CandidateClaim {
 // ---------------------- Elections, candidacy and results --------------------
 
 model Election {
-  id          String         @id @default(uuid())
-  slug        String         @unique
-  name        String
-  type        ElectionType
-  year        Int
-  status      ElectionStatus @default(UPCOMING)
+  id           String          @id @default(uuid())
+  slug         String          @unique
+  name         String
+  type         ElectionType
+  /// Gregorian year.
+  year         Int
+  /// Bikram Sambat year, which is how Nepali election cycles are named.
+  bsYear       Int?
+  level        GovernmentLevel @default(FEDERAL)
+  status       ElectionStatus  @default(UPCOMING)
   electionDate DateTime?
-  description String?
-  totalSeats  Int?
-  sourceName  String?
-  sourceUrl   String?
-  createdAt   DateTime       @default(now())
+  description  String?
+  totalSeats   Int?
+  sourceName   String?
+  sourceUrl    String?
+  createdAt    DateTime        @default(now())
 
   candidacies Candidacy[]
   results     Result[]
@@ -439,11 +487,13 @@ model Election {
 
 /// Election calendar entries (nomination opens, campaign silence, polling day…).
 model ElectionEvent {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   electionId String
-  election   Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  election   Election  @relation(fields: [electionId], references: [id], onDelete: Cascade)
   title      String
   detail     String?
+  /// Original Bikram Sambat date as published, e.g. "2081 Jestha 10".
+  bsDate     String?
   startsAt   DateTime
   endsAt     DateTime?
 
@@ -496,29 +546,66 @@ model Result {
   @@index([electionId, constituencyId])
 }
 
+/// A tracked public issue for a constituency, distinct from a citizen-reported
+/// `Complaint`: this is an editorially maintained agenda item.
+model ConstituencyIssue {
+  id             String       @id @default(uuid())
+  constituencyId String
+  constituency   Constituency @relation(fields: [constituencyId], references: [id], onDelete: Cascade)
+  title          String
+  status         IssueStatus  @default(RAISED)
+  position       Int          @default(0)
+  note           String?
+
+  @@index([constituencyId, position])
+}
+
+/// A past election winner recorded as a summary rather than a full count.
+///
+/// Kept separate from `Result` on purpose: these rows carry a winner name and a
+/// margin but no per-candidate vote totals, and inventing a `votes` value to
+/// force them into `Result` would present a summary as a full official count.
+model HistoricalResult {
+  id                String       @id @default(uuid())
+  constituencyId    String
+  constituency      Constituency @relation(fields: [constituencyId], references: [id], onDelete: Cascade)
+  /// Bikram Sambat year of the election.
+  bsYear            Int
+  winnerName        String
+  winnerAffiliation String?
+  /// Winning margin in votes.
+  margin            Int?
+  sourceName        String?
+  sourceUrl         String?
+  createdAt         DateTime     @default(now())
+
+  @@unique([constituencyId, bsYear, winnerName])
+  @@index([constituencyId, bsYear])
+}
+
 // --------------------- Public opinion: ratings and polls --------------------
 
 /// Six weighted dimensions from section 7. `weightedScore` is derived and
 /// stored for query performance; the weights are published in the methodology.
 model Rating {
-  id             String           @id @default(uuid())
-  userId         String
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  candidateId    String
-  candidate      Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  id              String           @id @default(uuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidateId     String
+  candidate       Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   publicTrust     Int
   communication   Int
   localIssueFocus Int
   policyClarity   Int
   responsiveness  Int
   overall         Int
-  weightedScore  Float
-  comment        String?
-  status         ModerationStatus @default(VISIBLE)
-  moderationNote String?
-  ipHash         String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  weightedScore   Float
+  comment         String?
+  status          ModerationStatus @default(VISIBLE)
+  moderationNote  String?
+  ipHash          String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   reports RatingReport[]
 
@@ -527,14 +614,14 @@ model Rating {
 }
 
 model RatingReport {
-  id         String           @id @default(uuid())
+  id         String   @id @default(uuid())
   ratingId   String
-  rating     Rating           @relation(fields: [ratingId], references: [id], onDelete: Cascade)
+  rating     Rating   @relation(fields: [ratingId], references: [id], onDelete: Cascade)
   reporterId String
-  reporter   User             @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  reporter   User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
   reason     String
-  resolved   Boolean          @default(false)
-  createdAt  DateTime         @default(now())
+  resolved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
   @@unique([ratingId, reporterId])
 }
@@ -609,7 +696,7 @@ model Complaint {
   department   String?
 
   verifiedById String?
-  verifiedBy   User?   @relation("ComplaintVerifier", fields: [verifiedById], references: [id])
+  verifiedBy   User?     @relation("ComplaintVerifier", fields: [verifiedById], references: [id])
   verifiedAt   DateTime?
 
   expectedUpdateAt DateTime?
@@ -675,7 +762,7 @@ model ComplaintAttachment {
 // ------------- Accountability: manifestos, promises, performance ------------
 
 model Manifesto {
-  id          String   @id @default(uuid())
+  id          String     @id @default(uuid())
   title       String
   summary     String?
   sourceUrl   String?
@@ -692,16 +779,16 @@ model Manifesto {
 }
 
 model Promise {
-  id          String        @id @default(uuid())
-  title       String
-  description String?
-  category    String?
-  status      PromiseStatus @default(NOT_STARTED)
-  evidenceUrl String?
+  id           String        @id @default(uuid())
+  title        String
+  description  String?
+  category     String?
+  status       PromiseStatus @default(NOT_STARTED)
+  evidenceUrl  String?
   evidenceNote String?
-  targetDate  DateTime?
-  lastUpdateAt DateTime     @default(now())
-  createdAt   DateTime      @default(now())
+  targetDate   DateTime?
+  lastUpdateAt DateTime      @default(now())
+  createdAt    DateTime      @default(now())
 
   manifestoId    String?
   manifesto      Manifesto?    @relation(fields: [manifestoId], references: [id])
@@ -733,21 +820,21 @@ model PromiseUpdate {
 /// Objective, source-backed activity records (section 12). Kept apart from
 /// perception-based `Rating` data by design.
 model PerformanceRecord {
-  id          String    @id @default(uuid())
-  candidateId String
-  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  periodLabel String
-  periodStart DateTime?
-  periodEnd   DateTime?
-  attendancePct        Float?
-  questionsAsked       Int?
-  billsSponsored       Int?
-  committeeMeetings    Int?
+  id                     String    @id @default(uuid())
+  candidateId            String
+  candidate              Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  periodLabel            String
+  periodStart            DateTime?
+  periodEnd              DateTime?
+  attendancePct          Float?
+  questionsAsked         Int?
+  billsSponsored         Int?
+  committeeMeetings      Int?
   constituencyActivities Int?
-  issueResponses       Int?
-  sourceName  String?
-  sourceUrl   String?
-  createdAt   DateTime  @default(now())
+  issueResponses         Int?
+  sourceName             String?
+  sourceUrl              String?
+  createdAt              DateTime  @default(now())
 
   @@unique([candidateId, periodLabel])
 }
@@ -779,15 +866,15 @@ model NewsArticle {
 
 /// Visible correction history (section 13) — corrections never overwrite.
 model NewsRevision {
-  id        String   @id @default(uuid())
-  articleId String
-  article   NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  editorId  String?
-  editor    User?    @relation(fields: [editorId], references: [id])
-  summary   String
-  isCorrection Boolean @default(false)
+  id           String      @id @default(uuid())
+  articleId    String
+  article      NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  editorId     String?
+  editor       User?       @relation(fields: [editorId], references: [id])
+  summary      String
+  isCorrection Boolean     @default(false)
   bodySnapshot String?
-  createdAt DateTime @default(now())
+  createdAt    DateTime    @default(now())
 
   @@index([articleId, createdAt])
 }
@@ -907,13 +994,13 @@ model ApiKey {
 
 /// Every dataset export is audited (section 14).
 model ExportLog {
-  id       String   @id @default(uuid())
-  userId   String
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dataset  String
-  filters  Json?
-  rowCount Int
-  format   String   @default("csv")
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dataset   String
+  filters   Json?
+  rowCount  Int
+  format    String   @default("csv")
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
