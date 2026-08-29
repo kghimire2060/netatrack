@@ -7,6 +7,7 @@ import { TrackLookup, ComplaintFeedbackForm } from "@/components/civic-forms";
 import { isValidTrackingId, normalizeTrackingId } from "@/lib/tracking";
 import { STATUS_TONE, STATUS_BEHAVIOUR } from "@/lib/complaint-workflow";
 import { formatDateTime, humanize, relativeTime } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Track an issue" };
 
@@ -19,6 +20,7 @@ export default async function TrackPage({
 }: {
   searchParams: Promise<{ id?: string }>;
 }) {
+  const { t } = await getTranslator();
   const params = await searchParams;
   const raw = params.id?.trim();
   const trackingId = raw ? normalizeTrackingId(raw) : null;
@@ -77,10 +79,8 @@ export default async function TrackPage({
 
   return (
     <div className="wrap section">
-      <h1>Track an issue</h1>
-      <p className="muted">
-        Enter the tracking ID you received when the issue was submitted. No account is required.
-      </p>
+      <h1>{t("issue.trackTitle")}</h1>
+      <p className="muted">{t("issue.trackLede")}</p>
 
       <Card>
         <TrackLookup initial={trackingId ?? ""} />
@@ -96,7 +96,7 @@ export default async function TrackPage({
       {trackingId && valid && !complaint ? (
         <Card className="section-tight">
           <EmptyState
-            title="No issue found with that tracking ID"
+            title={t("issue.notFound")}
             hint="Check for typing errors, or contact support if you believe this is wrong."
           />
         </Card>
@@ -125,7 +125,7 @@ export default async function TrackPage({
               ) : null}
             </Card>
 
-            <Card title="Progress timeline">
+            <Card title={t("issue.timeline")}>
               <ul className="timeline">
                 {complaint.events.map((event) => (
                   <li key={event.id} className={`is-${STATUS_TONE[event.status]}`}>
@@ -145,7 +145,7 @@ export default async function TrackPage({
             </Card>
 
             {complaint.publicResponse || complaint.resolutionNote ? (
-              <Card title="Official response">
+              <Card title={t("issue.officialResponse")}>
                 {complaint.publicResponse ? <p>{complaint.publicResponse}</p> : null}
                 {complaint.resolutionNote ? (
                   <>
@@ -171,7 +171,7 @@ export default async function TrackPage({
             ) : null}
 
             {complaint.status === "RESOLVED" || complaint.status === "CLOSED" ? (
-              <Card title="Your feedback">
+              <Card title={t("issue.yourFeedback")}>
                 {complaint.citizenFeedback ? (
                   <p className="small muted">
                     Feedback already recorded
@@ -185,7 +185,7 @@ export default async function TrackPage({
           </div>
 
           <aside className="stack">
-            <Card title="Status detail">
+            <Card title={t("issue.statusDetail")}>
               <dl className="kv">
                 <dt>Current status</dt>
                 <dd>
@@ -219,7 +219,7 @@ export default async function TrackPage({
       ) : null}
 
       {actor && myIssues.length > 0 ? (
-        <Card title="Your recent issues" className="section-tight">
+        <Card title={t("issue.myIssues")} className="section-tight">
           <div className="table-wrap">
             <table className="data responsive">
               <thead>

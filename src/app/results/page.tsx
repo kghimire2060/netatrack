@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Badge, Card, EmptyState, Meter, Stat } from "@/components/ui";
 import { formatDateTime, formatNumber, formatPercent, humanize } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Results" };
 
@@ -11,6 +12,7 @@ export default async function ResultsPage({
 }: {
   searchParams: Promise<{ election?: string }>;
 }) {
+  const { t } = await getTranslator();
   const params = await searchParams;
 
   const elections = await prisma.election.findMany({
@@ -57,11 +59,8 @@ export default async function ResultsPage({
 
   return (
     <div className="wrap section">
-      <h1>Election results</h1>
-      <p className="muted">
-        Official results only. Public opinion and candidate ratings are stored and displayed
-        separately, and are never presented as election outcomes.
-      </p>
+      <h1>{t("res.title")}</h1>
+      <p className="muted">{t("res.lede")}</p>
 
       {elections.length === 0 ? (
         <Card>
@@ -84,11 +83,11 @@ export default async function ResultsPage({
           {election ? (
             <>
               <div className="grid grid-4">
-                <Stat label="Total seats" value={formatNumber(election.totalSeats)} />
-                <Stat label="Seats declared" value={formatNumber(winners.length)} accent="green" />
-                <Stat label="Votes counted" value={formatNumber(totalVotes)} />
+                <Stat label={t("res.totalSeats")} value={formatNumber(election.totalSeats)} />
+                <Stat label={t("res.declared")} value={formatNumber(winners.length)} accent="green" />
+                <Stat label={t("res.votesCounted")} value={formatNumber(totalVotes)} />
                 <Stat
-                  label="Average turnout"
+                  label={t("res.turnout")}
                   value={averageTurnout === null ? "—" : formatPercent(averageTurnout)}
                   accent="orange"
                 />
@@ -107,9 +106,9 @@ export default async function ResultsPage({
               </div>
 
               <div className="grid grid-sidebar" style={{ marginTop: "1rem" }}>
-                <Card title="Declared results">
+                <Card title={t("res.declaredResults")}>
                   {results.length === 0 ? (
-                    <EmptyState title="No verified results published for this election yet" />
+                    <EmptyState title={t("res.noneYet")} />
                   ) : (
                     <div className="table-wrap">
                       <table className="data responsive">
@@ -174,7 +173,7 @@ export default async function ResultsPage({
                 </Card>
 
                 <aside className="stack">
-                  <Card title="Seats by party">
+                  <Card title={t("res.byParty")}>
                     {partySeats.length === 0 ? (
                       <p className="small muted">No seats declared yet.</p>
                     ) : (

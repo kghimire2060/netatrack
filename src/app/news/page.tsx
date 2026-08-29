@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Badge, Card, EmptyState, Pager } from "@/components/ui";
 import { formatDate } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "News" };
 
@@ -12,6 +13,7 @@ export default async function NewsPage({
 }: {
   searchParams: Promise<{ page?: string; category?: string }>;
 }) {
+  const { t } = await getTranslator();
   const params = await searchParams;
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const where = {
@@ -46,15 +48,12 @@ export default async function NewsPage({
 
   return (
     <div className="wrap section">
-      <h1>News and updates</h1>
-      <p className="muted">
-        Editorial content follows a draft → review → source review → approval → publish workflow.
-        Corrections are preserved in a visible revision history.
-      </p>
+      <h1>{t("news.title")}</h1>
+      <p className="muted">{t("news.lede")}</p>
 
       <div className="chip-row" style={{ marginBottom: "1rem" }}>
         <Link href="/news" className={`chip${params.category ? "" : " active"}`}>
-          All
+          {t("news.all")}
         </Link>
         {categories.map((row) => (
           <Link
@@ -78,8 +77,8 @@ export default async function NewsPage({
               <div className="row" style={{ gap: ".5rem" }}>
                 {article.category ? <Badge tone="muted">{article.category}</Badge> : null}
                 <span className="small faint">{formatDate(article.publishedAt)}</span>
-                {article._count.revisions > 0 ? <Badge tone="warn">Corrected</Badge> : null}
-                {article._count.factChecks > 0 ? <Badge tone="purple">Fact checked</Badge> : null}
+                {article._count.revisions > 0 ? <Badge tone="warn">{t("news.corrected")}</Badge> : null}
+                {article._count.factChecks > 0 ? <Badge tone="purple">{t("news.factChecked")}</Badge> : null}
               </div>
               <h3 style={{ margin: ".35rem 0 .2rem" }}>
                 <Link href={`/news/${article.slug}`}>{article.title}</Link>

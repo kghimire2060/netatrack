@@ -4,6 +4,7 @@ import { Card, EmptyState, Meter, Stat } from "@/components/ui";
 import { PromiseBadge } from "@/components/status";
 import { formatDate, humanize } from "@/lib/format";
 import type { PromiseStatus } from "@prisma/client";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Promise tracker" };
 
@@ -22,6 +23,7 @@ export default async function PromisesPage({
 }: {
   searchParams: Promise<{ status?: string; candidate?: string }>;
 }) {
+  const { t } = await getTranslator();
   const params = await searchParams;
   const status = STATUSES.find((value) => value === params.status);
 
@@ -53,18 +55,15 @@ export default async function PromisesPage({
 
   return (
     <div className="wrap section">
-      <h1>Manifesto and promise tracker</h1>
-      <p className="muted">
-        Campaign commitments converted into trackable records. Every status change is recorded, and
-        a promise cannot be marked completed without an evidence link.
-      </p>
+      <h1>{t("prom.title")}</h1>
+      <p className="muted">{t("prom.lede")}</p>
 
       <div className="grid grid-4">
-        <Stat label="Promises tracked" value={total} />
-        <Stat label="Completed" value={completed} accent="green" />
-        <Stat label="Delayed" value={delayed} accent="red" />
+        <Stat label={t("prom.tracked")} value={total} />
+        <Stat label={t("prom.completed")} value={completed} accent="green" />
+        <Stat label={t("prom.delayed")} value={delayed} accent="red" />
         <Stat
-          label="Completion rate"
+          label={t("prom.completionRate")}
           value={total === 0 ? "—" : `${Math.round((completed / total) * 100)}%`}
           accent="purple"
         />

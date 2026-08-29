@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { Card, EmptyState } from "@/components/ui";
 import { LevelBadge } from "@/components/status";
 import { formatNumber } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Constituencies" };
 
@@ -11,6 +12,7 @@ export default async function ConstituenciesPage({
 }: {
   searchParams: Promise<{ province?: string; q?: string; level?: string }>;
 }) {
+  const { t } = await getTranslator();
   const params = await searchParams;
 
   const constituencies = await prisma.constituency.findMany({
@@ -50,49 +52,46 @@ export default async function ConstituenciesPage({
 
   return (
     <div className="wrap section">
-      <h1>Constituencies</h1>
-      <p className="muted">
-        Province, district and constituency records with polling stations, candidates, past results
-        and locally reported citizen issues.
-      </p>
+      <h1>{t("con.title")}</h1>
+      <p className="muted">{t("con.lede")}</p>
 
       <Card>
         <form method="get" className="row" style={{ gap: ".6rem" }}>
-          <input name="q" defaultValue={params.q ?? ""} placeholder="Search constituency or district" className="grow" />
+          <input name="q" defaultValue={params.q ?? ""} placeholder={t("con.searchPlaceholder")} className="grow" />
           <select name="level" defaultValue={params.level ?? ""} aria-label="Level">
-            <option value="">All levels</option>
-            <option value="FEDERAL">Federal</option>
-            <option value="PROVINCIAL">Provincial</option>
+            <option value="">{t("con.allLevels")}</option>
+            <option value="FEDERAL">{t("con.federal")}</option>
+            <option value="PROVINCIAL">{t("con.provincial")}</option>
           </select>
           <select name="province" defaultValue={params.province ?? ""}>
-            <option value="">All provinces</option>
+            <option value="">{t("con.allProvinces")}</option>
             {provinces.map((row) => (
               <option key={row.province} value={row.province}>
                 {row.province}
               </option>
             ))}
           </select>
-          <button className="btn btn-sm">Filter</button>
+          <button className="btn btn-sm">{t("common.filter")}</button>
         </form>
       </Card>
 
       {constituencies.length === 0 ? (
         <Card className="section-tight">
-          <EmptyState title="No constituencies match those filters" />
+          <EmptyState title={t("con.noMatch")} />
         </Card>
       ) : (
         <div className="table-wrap" style={{ marginTop: "1rem" }}>
           <table className="data responsive">
             <thead>
               <tr>
-                <th>Constituency</th>
-                <th>Level</th>
-                <th>District</th>
-                <th>Province</th>
-                <th className="num">Registered voters</th>
-                <th className="num">Candidates</th>
-                <th className="num">Polling stations</th>
-                <th className="num">Citizen issues</th>
+                <th>{t("con.title")}</th>
+                <th>{t("con.level")}</th>
+                <th>{t("cand.district")}</th>
+                <th>{t("con.province")}</th>
+                <th className="num">{t("con.registeredVoters")}</th>
+                <th className="num">{t("cand.title")}</th>
+                <th className="num">{t("con.pollingStations")}</th>
+                <th className="num">{t("con.citizenIssues")}</th>
               </tr>
             </thead>
             <tbody>

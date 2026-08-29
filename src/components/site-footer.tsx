@@ -1,51 +1,59 @@
 import Link from "next/link";
+import { getTranslator } from "@/lib/locale-server";
+import { FlagMark } from "./brand";
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const { t } = await getTranslator();
+
   return (
     <footer className="footer">
       <div className="wrap">
         <div className="cols">
           <div>
-            <div className="brand" style={{ fontSize: "1.15rem" }}>
-              Neta<span>Track</span>
+            <div className="brand" style={{ marginBottom: ".5rem" }}>
+              <FlagMark size={30} />
+              <span className="brand-text">
+                <span className="brand-name" style={{ fontSize: "1.15rem" }}>
+                  Neta<em>Track</em>
+                </span>
+                <span className="brand-tag">{t("brand.tagline")}</span>
+              </span>
             </div>
-            <p style={{ marginTop: ".5rem", maxWidth: "34ch" }}>
-              Nepal&apos;s independent digital platform for election information and citizen
-              accountability.
-            </p>
+            <p style={{ maxWidth: "34ch" }}>{t("footer.blurb")}</p>
             <p className="small" style={{ color: "#8ea7ca" }}>
-              NetaTrack is not an election authority. Public-opinion figures are never presented as
-              official election results.
+              {t("notice.notAuthority")}
             </p>
           </div>
           <div>
-            <h4>Explore</h4>
-            <Link href="/candidates">Candidates</Link>
-            <Link href="/constituencies">Constituencies</Link>
-            <Link href="/elections">Elections</Link>
-            <Link href="/results">Results</Link>
-            <Link href="/calendar">Election calendar</Link>
+            <h4>{t("footer.explore")}</h4>
+            <Link href="/candidates">{t("nav.candidates")}</Link>
+            <Link href="/constituencies">{t("nav.constituencies")}</Link>
+            <Link href="/elections">{t("nav.elections")}</Link>
+            <Link href="/results">{t("nav.results")}</Link>
+            <Link href="/calendar">{t("nav.calendar")}</Link>
           </div>
           <div>
-            <h4>Participate</h4>
-            <Link href="/opinion">Polls &amp; ratings</Link>
-            <Link href="/report">Report an issue</Link>
-            <Link href="/track">Track an issue</Link>
-            <Link href="/promises">Promise tracker</Link>
-            <Link href="/fact-checks">Fact checks</Link>
+            <h4>{t("footer.participate")}</h4>
+            <Link href="/opinion">{t("footer.pollsRatings")}</Link>
+            <Link href="/report">{t("footer.reportIssue")}</Link>
+            <Link href="/track">{t("footer.trackIssue")}</Link>
+            <Link href="/promises">{t("footer.promises")}</Link>
+            <Link href="/fact-checks">{t("footer.factChecks")}</Link>
           </div>
           <div>
-            <h4>Trust</h4>
-            <Link href="/methodology">Rating methodology</Link>
-            <Link href="/about">About &amp; neutrality</Link>
-            <Link href="/privacy">Privacy policy</Link>
-            <Link href="/terms">Terms of use</Link>
-            <Link href="/portal/researcher">Researcher access</Link>
+            <h4>{t("footer.trust")}</h4>
+            <Link href="/methodology">{t("footer.methodology")}</Link>
+            <Link href="/about">{t("footer.about")}</Link>
+            <Link href="/privacy">{t("footer.privacy")}</Link>
+            <Link href="/terms">{t("footer.terms")}</Link>
+            <Link href="/portal/researcher">{t("footer.researcher")}</Link>
           </div>
         </div>
         <div className="legal">
-          <span>© {new Date().getFullYear()} NetaTrack. Independent civic platform.</span>
-          <span>Know. Vote. Track.</span>
+          <span>
+            © {new Date().getFullYear()} NetaTrack. {t("footer.rights")}
+          </span>
+          <span>{t("brand.statement")}</span>
         </div>
       </div>
     </footer>

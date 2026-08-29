@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { Card, EmptyState, Stat } from "@/components/ui";
 import { VerdictBadge } from "@/components/status";
 import { formatDate, humanize } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Fact checks" };
 
@@ -20,6 +21,7 @@ export default async function FactChecksPage({
 }: {
   searchParams: Promise<{ verdict?: string }>;
 }) {
+  const { t } = await getTranslator();
   const params = await searchParams;
   const verdict = VERDICTS.find((value) => value === params.verdict);
 
@@ -44,11 +46,8 @@ export default async function FactChecksPage({
 
   return (
     <div className="wrap section">
-      <h1>Fact checks</h1>
-      <p className="muted">
-        Claim intake → evidence collection → reviewer → verdict → editor approval → publication.
-        Subjects may attach a response; a response never overwrites the verdict.
-      </p>
+      <h1>{t("fc.title")}</h1>
+      <p className="muted">{t("fc.lede")}</p>
 
       <div className="grid grid-3">
         <Stat label="Published checks" value={total} />
@@ -62,7 +61,7 @@ export default async function FactChecksPage({
 
       <div className="chip-row" style={{ margin: "1rem 0" }}>
         <Link href="/fact-checks" className={`chip${verdict ? "" : " active"}`}>
-          All
+          {t("news.all")}
         </Link>
         {VERDICTS.map((value) => (
           <Link

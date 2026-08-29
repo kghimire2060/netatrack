@@ -3,10 +3,12 @@ import { prisma } from "@/lib/db";
 import { Card, EmptyState, Stat } from "@/components/ui";
 import { ElectionBadge } from "@/components/status";
 import { formatDate, formatNumber, humanize } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Elections" };
 
 export default async function ElectionsPage() {
+  const { t } = await getTranslator();
   const elections = await prisma.election.findMany({
     orderBy: [{ year: "desc" }, { name: "asc" }],
     select: {
@@ -29,7 +31,7 @@ export default async function ElectionsPage() {
 
   return (
     <div className="wrap section">
-      <h1>Elections</h1>
+      <h1>{t("elec.title")}</h1>
       <p className="muted">
         Election metadata, schedules, candidate registration and official results. Every result
         record shows its source and last update time.

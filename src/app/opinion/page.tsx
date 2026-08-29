@@ -6,10 +6,12 @@ import { Card, EmptyState, Stars, Stat } from "@/components/ui";
 import { PollVoteForm } from "@/components/civic-forms";
 import { RATING_DIMENSIONS } from "@/lib/ratings";
 import { formatDate, formatNumber } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Public opinion" };
 
 export default async function OpinionPage() {
+  const { t } = await getTranslator();
   const [actor, pollsEnabled, ratingsEnabled] = await Promise.all([
     getActor(),
     getSetting("features.publicPolls"),
@@ -64,11 +66,8 @@ export default async function OpinionPage() {
 
   return (
     <div className="wrap section">
-      <h1>Public opinion</h1>
-      <p className="muted">
-        Polls, surveys and candidate ratings submitted by registered users. These figures measure
-        perception. They are not election results and are not voting recommendations.
-      </p>
+      <h1>{t("op.title")}</h1>
+      <p className="muted">{t("op.lede")}</p>
 
       <div className="grid grid-3">
         <Stat label="Ratings submitted" value={formatNumber(ratingCount)} />
@@ -79,7 +78,7 @@ export default async function OpinionPage() {
       <div className="grid grid-sidebar" style={{ marginTop: "1.2rem" }}>
         <div className="stack">
           <Card
-            title="Candidate rating leaderboard"
+            title={t("op.leaderboard")}
             action={
               <Link className="small" href="/methodology">
                 Methodology
@@ -165,7 +164,7 @@ export default async function OpinionPage() {
         </div>
 
         <aside className="stack">
-          <Card title="How ratings are calculated">
+          <Card title={t("op.howCalculated")}>
             <ul className="small" style={{ paddingLeft: "1.1rem", margin: 0 }}>
               {RATING_DIMENSIONS.map((dimension) => (
                 <li key={dimension.key} style={{ marginBottom: ".3rem" }}>
@@ -179,7 +178,7 @@ export default async function OpinionPage() {
             </Link>
           </Card>
 
-          <Card title="Rating safeguards">
+          <Card title={t("op.safeguards")}>
             <ul className="small muted" style={{ paddingLeft: "1.1rem", margin: 0 }}>
               <li>Only authenticated accounts may submit ratings.</li>
               <li>One rating per account per candidate; updates replace it.</li>

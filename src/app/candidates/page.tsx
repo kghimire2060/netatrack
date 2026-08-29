@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { Avatar, Card, EmptyState, Pager, Stars } from "@/components/ui";
 import { VerificationBadge } from "@/components/status";
 import type { Prisma } from "@prisma/client";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Candidates" };
 
@@ -13,6 +14,7 @@ export default async function CandidatesPage({
 }: {
   searchParams: Promise<{ q?: string; party?: string; district?: string; page?: string; verified?: string }>;
 }) {
+  const { t } = await getTranslator();
   const params = await searchParams;
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
 
@@ -64,27 +66,24 @@ export default async function CandidatesPage({
     <div className="wrap section">
       <div className="row-between">
         <div>
-          <h1>Candidates</h1>
-          <p className="muted">
-            Source-backed profiles. Verification status shows whether the editorial team has
-            confirmed the record against a published source.
-          </p>
+          <h1>{t("cand.title")}</h1>
+          <p className="muted">{t("cand.lede")}</p>
         </div>
         <Link className="btn btn-ghost" href="/compare">
-          Compare candidates
+          {t("cand.compare")}
         </Link>
       </div>
 
       <Card className="section-tight">
         <form method="get" className="grid grid-4" style={{ alignItems: "end" }}>
           <div className="field" style={{ margin: 0 }}>
-            <label htmlFor="q">Search</label>
-            <input id="q" name="q" defaultValue={params.q ?? ""} placeholder="Name, agenda or issue" />
+            <label htmlFor="q">{t("cand.searchLabel")}</label>
+            <input id="q" name="q" defaultValue={params.q ?? ""} placeholder={t("cand.searchPlaceholder")} />
           </div>
           <div className="field" style={{ margin: 0 }}>
-            <label htmlFor="party">Party</label>
+            <label htmlFor="party">{t("cand.party")}</label>
             <select id="party" name="party" defaultValue={params.party ?? ""}>
-              <option value="">All parties</option>
+              <option value="">{t("cand.allParties")}</option>
               {parties.map((party) => (
                 <option key={party.slug} value={party.slug}>
                   {party.name}
@@ -93,9 +92,9 @@ export default async function CandidatesPage({
             </select>
           </div>
           <div className="field" style={{ margin: 0 }}>
-            <label htmlFor="district">District</label>
+            <label htmlFor="district">{t("cand.district")}</label>
             <select id="district" name="district" defaultValue={params.district ?? ""}>
-              <option value="">All districts</option>
+              <option value="">{t("cand.allDistricts")}</option>
               {districts.map((row) => (
                 <option key={row.district} value={row.district}>
                   {row.district}
@@ -106,20 +105,20 @@ export default async function CandidatesPage({
           <div className="row" style={{ gap: ".5rem" }}>
             <label className="row small" style={{ margin: 0 }}>
               <input type="checkbox" name="verified" value="1" defaultChecked={params.verified === "1"} />
-              <span>Verified only</span>
+              <span>{t("cand.verifiedOnly")}</span>
             </label>
-            <button className="btn btn-sm">Filter</button>
+            <button className="btn btn-sm">{t("common.filter")}</button>
           </div>
         </form>
       </Card>
 
       <p className="small muted" style={{ marginTop: "1rem" }}>
-        {total.toLocaleString()} candidates
+        {total.toLocaleString()} {t("cand.count")}
       </p>
 
       {candidates.length === 0 ? (
         <Card>
-          <EmptyState title="No candidates match those filters" hint="Try widening your search." />
+          <EmptyState title={t("cand.noMatch")} />
         </Card>
       ) : (
         <div className="grid grid-3">
@@ -159,7 +158,7 @@ export default async function CandidatesPage({
                       </span>
                     </span>
                   ) : (
-                    <span className="small faint">No ratings yet</span>
+                    <span className="small faint">{t("cand.noRatings")}</span>
                   )}
                   <VerificationBadge status={candidate.verificationStatus} />
                 </div>

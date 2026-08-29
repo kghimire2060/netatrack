@@ -6,10 +6,12 @@ import { Card } from "@/components/ui";
 import { ReportIssueForm } from "@/components/civic-forms";
 import { STATUS_BEHAVIOUR, COMPLAINT_FLOW } from "@/lib/complaint-workflow";
 import { humanize } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Report an issue" };
 
 export default async function ReportPage() {
+  const { t } = await getTranslator();
   const [actor, categories, allowAnonymous, slaHours, constituencies] = await Promise.all([
     getActor(),
     getSetting("complaints.categories"),
@@ -23,11 +25,8 @@ export default async function ReportPage() {
 
   return (
     <div className="wrap section">
-      <h1>Report a citizen issue</h1>
-      <p className="muted">
-        Every submitted issue receives a public tracking ID and a transparent status timeline. You
-        can follow it without an account.
-      </p>
+      <h1>{t("issue.reportTitle")}</h1>
+      <p className="muted">{t("issue.reportLede")}</p>
 
       <div className="grid grid-sidebar">
         <Card>
@@ -46,7 +45,7 @@ export default async function ReportPage() {
         </Card>
 
         <aside className="stack">
-          <Card title="What happens next">
+          <Card title={t("issue.whatNext")}>
             <ol className="small" style={{ paddingLeft: "1.1rem", margin: 0 }}>
               {COMPLAINT_FLOW.map((status) => (
                 <li key={status} style={{ marginBottom: ".35rem" }}>

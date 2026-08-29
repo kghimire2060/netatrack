@@ -3,10 +3,12 @@ import { prisma } from "@/lib/db";
 import { Card, EmptyState } from "@/components/ui";
 import { ElectionBadge } from "@/components/status";
 import { formatDate } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export const metadata = { title: "Election calendar" };
 
 export default async function CalendarPage() {
+  const { t } = await getTranslator();
   const now = new Date();
   const events = await prisma.electionEvent.findMany({
     orderBy: { startsAt: "asc" },
@@ -18,14 +20,14 @@ export default async function CalendarPage() {
 
   return (
     <div className="wrap section">
-      <h1>Election calendar</h1>
+      <h1>{t("elec.calendar")}</h1>
       <p className="muted">
         Nomination windows, campaign periods, polling days and counting milestones across all
         recorded elections.
       </p>
 
       <div className="grid grid-sidebar">
-        <Card title="Upcoming">
+        <Card title={t("elec.upcoming")}>
           {upcoming.length === 0 ? (
             <EmptyState title="No upcoming scheduled events" />
           ) : (
@@ -48,7 +50,7 @@ export default async function CalendarPage() {
           )}
         </Card>
 
-        <Card title="Past events">
+        <Card title={t("elec.past")}>
           {past.length === 0 ? (
             <p className="small muted">Nothing recorded yet.</p>
           ) : (
