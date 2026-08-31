@@ -37,6 +37,7 @@ export type ProvincePulse = {
   province: string;
   federal: number;
   provincial: number;
+  local: number;
   candidates: number;
   issues: number;
   complaints: number;
@@ -287,6 +288,7 @@ async function getProvincePulse(): Promise<ProvincePulse[]> {
         province: key,
         federal: 0,
         provincial: 0,
+        local: 0,
         candidates: 0,
         issues: 0,
         complaints: 0,
@@ -297,7 +299,8 @@ async function getProvincePulse(): Promise<ProvincePulse[]> {
     if (row.level === "FEDERAL") {
       entry.federal += 1;
       entry.districts.set(row.district, (entry.districts.get(row.district) ?? 0) + 1);
-    } else entry.provincial += 1;
+    } else if (row.level === "PROVINCIAL") entry.provincial += 1;
+    else entry.local += 1;
     entry.candidates += row._count.candidates;
     entry.issues += row._count.issues;
     entry.complaints += row._count.complaints;

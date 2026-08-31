@@ -1,35 +1,43 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { Card, EmptyState } from "@/components/ui";
+import { Card, EmptyState, Pager } from "@/components/ui";
 import { LevelBadge } from "@/components/status";
 import { formatNumber } from "@/lib/format";
 import { getTranslator } from "@/lib/locale-server";
+import { enumLabel } from "@/lib/i18n";
+import type { GovernmentLevel, Prisma } from "@prisma/client";
 
 export const metadata = { title: "Constituencies" };
 
 export default async function ConstituenciesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ province?: string; q?: string; level?: string }>;
+  searchParams: Promise<{ province?: string; q?: string; level?: string; page?: string }>;
 }) {
-  const { t } = await getTranslator();
+  const { t, locale } = await getTranslator();
   const params = await searchParams;
 
+  const PAGE_SIZE = 50;
+  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
+  const level = (["FEDERAL", "PROVINCIAL", "LOCAL"] as const).find((l) => l === params.level);
+  const where: Prisma.ConstituencyWhereInput = {
+    ...(params.province ? { province: params.province } : {}),
+    ...(level ? { level: level as GovernmentLevel } : {}),
+    ...(params.q
+      ? {
+          OR: [
+            { name: { contains: params.q, mode: "insensitive" as const } },
+            { nameNe: { contains: params.q } },
+            { district: { contains: params.q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+  const total = await prisma.constituency.count({ where });
   const constituencies = await prisma.constituency.findMany({
-    where: {
-      ...(params.province ? { province: params.province } : {}),
-      ...(params.level === "FEDERAL" || params.level === "PROVINCIAL"
-        ? { level: params.level }
-        : {}),
-      ...(params.q
-        ? {
-            OR: [
-              { name: { contains: params.q, mode: "insensitive" as const } },
-              { district: { contains: params.q, mode: "insensitive" as const } },
-            ],
-          }
-        : {}),
-    },
+    where,
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
     orderBy: [{ province: "asc" }, { district: "asc" }, { name: "asc" }],
     select: {
       id: true,
@@ -39,6 +47,9 @@ export default async function ConstituenciesPage({
       district: true,
       registeredVoters: true,
       level: true,
+      localBodyType: true,
+      nameNe: true,
+      population: true,
       pollingStationCount: true,
       _count: { select: { candidates: true, pollingStations: true, complaints: true } },
     },
@@ -62,6 +73,7 @@ export default async function ConstituenciesPage({
             <option value="">{t("con.allLevels")}</option>
             <option value="FEDERAL">{t("con.federal")}</option>
             <option value="PROVINCIAL">{t("con.provincial")}</option>
+            <option value="LOCAL">{t("con.local")}</option>
           </select>
           <select name="province" defaultValue={params.province ?? ""}>
             <option value="">{t("con.allProvinces")}</option>
@@ -86,6 +98,7 @@ export default async function ConstituenciesPage({
               <tr>
                 <th>{t("con.title")}</th>
                 <th>{t("con.level")}</th>
+                <th>{t("con.type")}</th>
                 <th>{t("cand.district")}</th>
                 <th>{t("con.province")}</th>
                 <th className="num">{t("con.registeredVoters")}</th>
@@ -102,6 +115,15 @@ export default async function ConstituenciesPage({
                   </td>
                   <td data-label="Level">
                     <LevelBadge level={constituency.level} />
+                  </td>
+                  <td data-label="Type">
+                    {constituency.localBodyType ? (
+                      <span className="badge badge-muted">
+                        {enumLabel(constituency.localBodyType, locale)}
+                      </span>
+                    ) : (
+                      <span className="faint">—</span>
+                    )}
                   </td>
                   <td data-label="District">{constituency.district}</td>
                   <td data-label="Province">{constituency.province}</td>
@@ -123,6 +145,13 @@ export default async function ConstituenciesPage({
           </table>
         </div>
       )}
+
+      <Pager
+        page={page}
+        pages={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+        basePath="/constituencies"
+        query={{ q: params.q, province: params.province, level: params.level }}
+      />
     </div>
   );
 }

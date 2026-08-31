@@ -194,7 +194,8 @@ export default async function HomePage() {
             labels={{
               seats: t("pulse.seats"), candidates: t("pulse.candidates"), issues: t("pulse.issues"),
               voters: t("pulse.voters"), explore: t("pulse.explore"), districts: t("pulse.districts"),
-              federal: t("pulse.federal"), provincial: t("pulse.provincial"), pick: t("pulse.pick"),
+              federal: t("pulse.federal"), provincial: t("pulse.provincial"),
+              local: t("con.local"), pick: t("pulse.pick"),
             }}
           />
         </Section>

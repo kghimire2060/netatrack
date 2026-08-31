@@ -32,6 +32,7 @@ export function ConstituencyPulse({
     districts: string;
     federal: string;
     provincial: string;
+    local: string;
     pick: string;
   };
 }) {
@@ -78,6 +79,7 @@ export function ConstituencyPulse({
             <h3>{selected.province}</h3>
             <span className="badge badge-navy">
               {n(selected.federal)} {labels.federal} · {n(selected.provincial)} {labels.provincial}
+              {selected.local > 0 ? ` · ${n(selected.local)} ${labels.local}` : ""}
             </span>
           </div>
 

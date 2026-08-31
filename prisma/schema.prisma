@@ -94,6 +94,14 @@ enum GovernmentLevel {
   LOCAL
 }
 
+/// Nepal's 753 local bodies, by the classification the government uses.
+enum LocalBodyType {
+  METROPOLITAN
+  SUB_METROPOLITAN
+  MUNICIPALITY
+  RURAL_MUNICIPALITY
+}
+
 enum IssueStatus {
   RAISED
   ONGOING
@@ -311,6 +319,15 @@ model Constituency {
   majorIssues      String?
 
   level               GovernmentLevel @default(FEDERAL)
+  /// Set only for level = LOCAL: which of the four local body classes this is.
+  localBodyType       LocalBodyType?
+  /// Devanagari name as published, so the Nepali UI is not a transliteration.
+  nameNe              String?
+  population          Int?
+  areaSqKm            Float?
+  /// Provenance, same contract as elections: a row states where it came from.
+  sourceName          String?
+  sourceUrl           String?
   /// Constituency number within its district, e.g. the 1 in Kathmandu-1.
   number              Int?
   wards               Int?
