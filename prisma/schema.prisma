@@ -473,9 +473,23 @@ model Election {
   electionDate DateTime?
   description  String?
   totalSeats   Int?
+  /// Seats filled by first-past-the-post, where the authority publishes the split.
+  fptpSeats    Int?
+  /// Seats filled by proportional representation.
+  prSeats      Int?
+
+  /// Provenance. A record is surfaced as *current* only when it is VERIFIED and
+  /// carries a source; otherwise it is shown as unverified or historical, never
+  /// as live fact.
   sourceName   String?
   sourceUrl    String?
-  createdAt    DateTime        @default(now())
+  verification VerificationStatus @default(PENDING)
+  /// When this record was last checked against the cited source.
+  verifiedAt   DateTime?
+  verifiedNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   candidacies Candidacy[]
   results     Result[]
@@ -492,10 +506,16 @@ model ElectionEvent {
   election   Election  @relation(fields: [electionId], references: [id], onDelete: Cascade)
   title      String
   detail     String?
-  /// Original Bikram Sambat date as published, e.g. "2081 Jestha 10".
+  /// Original Bikram Sambat date as published, e.g. "2082 Phalguna 21".
   bsDate     String?
-  startsAt   DateTime
+  /// Nullable on purpose: a BS date string alone does not give a verified
+  /// Gregorian instant. Converting one by assumption produced a fake countdown
+  /// once already, so an unconfirmed date is stored as null and the UI shows
+  /// the BS string without pretending to know the time.
+  startsAt   DateTime?
   endsAt     DateTime?
+  sourceName String?
+  sourceUrl  String?
 
   @@index([electionId, startsAt])
 }

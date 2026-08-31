@@ -929,3 +929,52 @@ html[lang="ne"] .radar-kind { text-transform: none; letter-spacing: 0; font-size
   .radar-row { grid-template-columns: minmax(0, 1fr); gap: .15rem; }
   .radar-title { white-space: normal; }
 }
+
+/* ------------------------------- trust layer ------------------------------ */
+
+.trust-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.4rem;
+  margin-top: .9rem; padding: .6rem .9rem;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.trust-item { display: inline-flex; align-items: center; gap: .45rem; min-width: 0; }
+.trust-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dv-3); flex: 0 0 auto; }
+
+.trust-badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  font-size: .72rem; font-weight: 800; letter-spacing: .02em;
+  padding: .14rem .5rem; border-radius: var(--radius-pill); white-space: nowrap;
+}
+.trust-badge.is-verified { background: var(--tint-green); color: #15803d; }
+.trust-badge.is-unverified { background: var(--tint-orange); color: #b4650f; }
+.trust-badge.is-historical { background: var(--surface-sunken); color: var(--ink-muted); }
+:root[data-theme="dark"] .trust-badge.is-verified { color: #4ecb77; }
+:root[data-theme="dark"] .trust-badge.is-unverified { color: #f5a94f; }
+
+.source-line { font-size: .76rem; color: var(--ink-muted); }
+.source-line a { color: var(--ink-muted); text-decoration: underline; text-underline-offset: 2px; }
+.source-line a:hover { color: var(--dv-1); }
+
+/* election panel in the hero */
+.election-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.15rem; box-shadow: var(--shadow);
+  position: relative; overflow: hidden;
+}
+.election-card::before {
+  content: ""; position: absolute; inset-inline: 0; top: 0; height: 3px;
+  background: linear-gradient(90deg, var(--dv-3), var(--dv-1), var(--dv-5));
+}
+.election-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin: .9rem 0; }
+.election-facts dt { font-size: .66rem; color: var(--ink-faint); font-weight: 600; line-height: 1.3; }
+.election-facts dd {
+  margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--dash-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* a historical record must never read as current */
+.historical-note {
+  border-inline-start: 3px solid var(--ink-faint); background: var(--surface-sunken);
+  padding: .55rem .85rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: .8rem; color: var(--ink-muted);
+}

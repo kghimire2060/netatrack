@@ -6,10 +6,11 @@ import { Avatar } from "@/components/ui";
 import { ComplaintBadge, PromiseBadge } from "@/components/status";
 import { AnimatedCounter } from "@/components/dashboard/counter";
 import { ElectionCountdown } from "@/components/dashboard/countdown";
+import { SourceLine, TrustBar, VerifiedBadge } from "@/components/dashboard/trust";
 import { BarList, Gauge, ScoreRows, SentimentBar } from "@/components/dashboard/charts";
 import { ConstituencyPulse } from "@/components/dashboard/constituency-pulse";
 import { PeopleIcon, PinIcon, DocIcon, ChartIcon, SearchIcon } from "@/components/icons";
-import { relativeTime } from "@/lib/format";
+import { formatDate, relativeTime } from "@/lib/format";
 import type { ReactNode } from "react";
 
 const KPI_META: Record<string, { label: TranslationKey; hint: TranslationKey; icon: ReactNode; tint: string }> = {
@@ -47,24 +48,75 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {d.nextEvent ? (
-              <div className="countdown-card">
-                <div className="countdown-head">
-                  <span className="badge badge-bad">{t("sec.countdown")}</span>
-                  <span className="small faint">{d.nextEvent.election.name}</span>
-                </div>
-                <h3 className="countdown-title">{d.nextEvent.title}</h3>
-                {d.nextEvent.bsDate ? <div className="small faint">{d.nextEvent.bsDate}</div> : null}
-                <ElectionCountdown
-                  targetIso={d.nextEvent.startsAt.toISOString()}
-                  labels={{
-                    days: t("cd.days"), hours: t("cd.hours"),
-                    minutes: t("cd.minutes"), seconds: t("cd.seconds"), passed: t("cd.passed"),
-                  }}
-                />
-                {d.nextEvent.detail ? <p className="small muted" style={{ margin: ".7rem 0 0" }}>{d.nextEvent.detail}</p> : null}
-              </div>
-            ) : null}
+            <div className="election-card">
+              {d.nextEvent?.startsAt ? (
+                <>
+                  <div className="countdown-head">
+                    <span className="badge badge-bad">{t("sec.countdown")}</span>
+                    <VerifiedBadge state="verified" t={t} />
+                  </div>
+                  <h3 className="countdown-title">{d.nextEvent.title}</h3>
+                  <div className="small faint">
+                    {d.nextEvent.election.name}
+                    {d.nextEvent.bsDate ? ` · ${d.nextEvent.bsDate}` : ""}
+                  </div>
+                  <ElectionCountdown
+                    targetIso={d.nextEvent.startsAt.toISOString()}
+                    labels={{
+                      days: t("cd.days"), hours: t("cd.hours"),
+                      minutes: t("cd.minutes"), seconds: t("cd.seconds"), passed: t("cd.passed"),
+                    }}
+                  />
+                  <SourceLine
+                    t={t}
+                    sourceName={d.nextEvent.sourceName}
+                    sourceUrl={d.nextEvent.sourceUrl}
+                    verifiedAt={null}
+                  />
+                </>
+              ) : d.election ? (
+                <>
+                  <div className="countdown-head">
+                    <span className="badge badge-navy">{t("trust.latestElection")}</span>
+                    <VerifiedBadge state="verified" t={t} />
+                  </div>
+                  <h3 className="countdown-title">{d.election.name}</h3>
+                  <dl className="election-facts">
+                    <div>
+                      <dt>{t("trust.pollingDay")}</dt>
+                      <dd>{formatDate(d.election.electionDate)}</dd>
+                    </div>
+                    <div>
+                      <dt>{t("trust.seats")}</dt>
+                      <dd>{formatCount(d.election.totalSeats, locale)}</dd>
+                    </div>
+                    <div>
+                      <dt>{t("trust.fptp")} / {t("trust.pr")}</dt>
+                      <dd>
+                        {formatCount(d.election.fptpSeats, locale)} / {formatCount(d.election.prSeats, locale)}
+                      </dd>
+                    </div>
+                  </dl>
+                  <div className="badge badge-good" style={{ marginBottom: ".5rem" }}>
+                    {t("trust.countingDone")}
+                  </div>
+                  <p className="small muted" style={{ margin: "0 0 .5rem" }}>{t("trust.noResultsHeld")}</p>
+                  <SourceLine
+                    t={t}
+                    sourceName={d.election.sourceName}
+                    sourceUrl={d.election.sourceUrl}
+                    verifiedAt={d.election.verifiedAt}
+                  />
+                </>
+              ) : (
+                <>
+                  <VerifiedBadge state="unverified" t={t} />
+                  <p className="small muted" style={{ marginTop: ".6rem" }}>
+                    {t("trust.noVerifiedElection")}
+                  </p>
+                </>
+              )}
+            </div>
           </div>
 
         </div>
@@ -87,6 +139,13 @@ export default async function HomePage() {
             );
           })}
         </div>
+        <TrustBar
+          t={t}
+          election={d.election}
+          lastUpdated={d.freshness.lastUpdated}
+          candidatesVerified={d.freshness.candidatesVerified}
+          candidatesPending={d.freshness.candidatesPending}
+        />
       </div>
 
       <div className="wrap dash-body">

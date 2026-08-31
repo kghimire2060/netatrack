@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Badge, Breadcrumb, Card, EmptyState, Meter, Stat } from "@/components/ui";
 import { ElectionBadge, VerificationBadge } from "@/components/status";
+import { SourceLine, VerifiedBadge } from "@/components/dashboard/trust";
 import { formatDate, formatDateTime, formatNumber, formatPercent, humanize } from "@/lib/format";
+import { getTranslator } from "@/lib/locale-server";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -13,6 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ElectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const { t } = await getTranslator();
 
   const election = await prisma.election.findUnique({
     where: { slug },
@@ -67,6 +70,16 @@ export default async function ElectionPage({ params }: { params: Promise<{ slug:
           <div className="row" style={{ gap: ".5rem" }}>
             <h1 style={{ margin: 0 }}>{election.name}</h1>
             <ElectionBadge status={election.status} />
+            <VerifiedBadge
+              state={
+                election.verification === "VERIFIED"
+                  ? "verified"
+                  : election.verification === "REJECTED"
+                    ? "unverified"
+                    : "historical"
+              }
+              t={t}
+            />
           </div>
           <p className="muted" style={{ margin: ".3rem 0 0" }}>
             {humanize(election.type)} · {election.year}
@@ -75,7 +88,18 @@ export default async function ElectionPage({ params }: { params: Promise<{ slug:
         </div>
       </div>
 
+      {election.verification !== "VERIFIED" && election.verifiedNote ? (
+        <div className="historical-note" style={{ margin: ".7rem 0" }}>
+          {election.verifiedNote}
+        </div>
+      ) : null}
       {election.description ? <p>{election.description}</p> : null}
+      <SourceLine
+        t={t}
+        sourceName={election.sourceName}
+        sourceUrl={election.sourceUrl}
+        verifiedAt={election.verifiedAt}
+      />
 
       <div className="grid grid-4" style={{ marginTop: "1rem" }}>
         <Stat label="Total seats" value={formatNumber(election.totalSeats)} />
@@ -188,10 +212,21 @@ export default async function ElectionPage({ params }: { params: Promise<{ slug:
             ) : (
               <ul className="timeline">
                 {election.events.map((event) => (
-                  <li key={event.id} className={event.startsAt < new Date() ? "is-muted" : ""}>
+                  <li
+                    key={event.id}
+                    className={event.startsAt && event.startsAt < new Date() ? "is-muted" : ""}
+                  >
                     <div className="when">
-                      {formatDate(event.startsAt)}
-                      {event.endsAt ? ` – ${formatDate(event.endsAt)}` : ""}
+                      {event.startsAt ? (
+                        <>
+                          {formatDate(event.startsAt)}
+                          {event.endsAt ? ` – ${formatDate(event.endsAt)}` : ""}
+                        </>
+                      ) : (
+                        <span title="No confirmed Gregorian date on record">
+                          {event.bsDate ? `${event.bsDate} (BS)` : "Date not confirmed"}
+                        </span>
+                      )}
                     </div>
                     <div className="what">{event.title}</div>
                     {event.detail ? <div className="small muted">{event.detail}</div> : null}

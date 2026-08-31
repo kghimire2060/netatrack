@@ -15,8 +15,12 @@ export default async function CalendarPage() {
     include: { election: { select: { name: true, slug: true, status: true } } },
   });
 
-  const upcoming = events.filter((event) => (event.endsAt ?? event.startsAt) >= now);
-  const past = events.filter((event) => (event.endsAt ?? event.startsAt) < now).reverse();
+  // A milestone with only a Bikram Sambat string has no verified Gregorian
+  // instant, so it is listed separately instead of being guessed into order.
+  const dated = events.filter((e) => e.startsAt !== null);
+  const undated = events.filter((e) => e.startsAt === null);
+  const upcoming = dated.filter((e) => (e.endsAt ?? e.startsAt!) >= now);
+  const past = dated.filter((e) => (e.endsAt ?? e.startsAt!) < now).reverse();
 
   return (
     <div className="wrap section">
@@ -51,6 +55,19 @@ export default async function CalendarPage() {
         </Card>
 
         <Card title={t("elec.past")}>
+          {undated.length > 0 ? (
+            <div className="notice" style={{ marginBottom: ".9rem" }}>
+              <strong>{undated.length} milestone(s) have no confirmed calendar date.</strong>
+              <ul className="small" style={{ margin: ".35rem 0 0", paddingInlineStart: "1.1rem" }}>
+                {undated.map((e) => (
+                  <li key={e.id}>
+                    {e.title}
+                    {e.bsDate ? ` — ${e.bsDate} (Bikram Sambat, unconverted)` : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {past.length === 0 ? (
             <p className="small muted">Nothing recorded yet.</p>
           ) : (

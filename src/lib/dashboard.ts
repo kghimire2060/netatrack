@@ -88,6 +88,21 @@ export type RadarItem = {
 /** Party colours are assigned by a stable index so a filter never repaints them. */
 export const PARTY_ORDER_KEY = "party-index";
 
+export type Provenance = {
+  sourceName: string | null;
+  sourceUrl: string | null;
+  verifiedAt: Date | null;
+  verified: boolean;
+};
+
+export type Freshness = {
+  /** Most recent write across the tables the homepage reads. */
+  lastUpdated: Date | null;
+  /** Candidate records still awaiting editorial verification. */
+  candidatesPending: number;
+  candidatesVerified: number;
+};
+
 export async function getDashboard() {
   const now = new Date();
 
@@ -109,18 +124,50 @@ export async function getDashboard() {
     prisma.rating.count({ where: { status: "VISIBLE" } }),
     prisma.pollVote.count(),
     prisma.party.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, shortName: true } }),
+    // A countdown is only honest when the date is both in the future and
+    // sourced. Undated milestones (BS string only) and unverified elections
+    // are excluded rather than converted by assumption.
     prisma.electionEvent.findFirst({
-      where: { startsAt: { gte: now } },
+      where: {
+        startsAt: { not: null, gte: now },
+        election: { verification: "VERIFIED" },
+      },
       orderBy: { startsAt: "asc" },
-      select: { title: true, startsAt: true, bsDate: true, detail: true, election: { select: { name: true, slug: true } } },
+      select: {
+        title: true, startsAt: true, bsDate: true, detail: true,
+        sourceName: true, sourceUrl: true,
+        election: { select: { name: true, slug: true } },
+      },
     }),
     prisma.election.findFirst({
-      orderBy: [{ status: "asc" }, { year: "desc" }],
-      select: { name: true, slug: true, status: true, bsYear: true, totalSeats: true },
+      where: { verification: "VERIFIED" },
+      orderBy: [{ electionDate: "desc" }, { year: "desc" }],
+      select: {
+        name: true, slug: true, status: true, bsYear: true, year: true,
+        totalSeats: true, fptpSeats: true, prSeats: true, electionDate: true,
+        sourceName: true, sourceUrl: true, verifiedAt: true, updatedAt: true,
+      },
     }),
   ]);
 
   const partyIndex = new Map(parties.map((p, i) => [p.id, i]));
+
+  const [lastCandidate, lastComplaint, lastNews, candidatesVerified] = await Promise.all([
+    prisma.candidate.findFirst({ orderBy: { updatedAt: "desc" }, select: { updatedAt: true } }),
+    prisma.complaint.findFirst({ orderBy: { updatedAt: "desc" }, select: { updatedAt: true } }),
+    prisma.newsArticle.findFirst({ orderBy: { updatedAt: "desc" }, select: { updatedAt: true } }),
+    prisma.candidate.count({ where: { verificationStatus: "VERIFIED" } }),
+  ]);
+
+  const stamps = [
+    lastCandidate?.updatedAt, lastComplaint?.updatedAt, lastNews?.updatedAt, election?.updatedAt,
+  ].filter((d): d is Date => Boolean(d));
+
+  const freshness: Freshness = {
+    lastUpdated: stamps.length > 0 ? new Date(Math.max(...stamps.map((d) => d.getTime()))) : null,
+    candidatesPending: leaderCount - candidatesVerified,
+    candidatesVerified,
+  };
 
   const kpis: Kpi[] = [
     { key: "leaders", value: leaderCount, href: "/candidates" },
@@ -131,6 +178,7 @@ export async function getDashboard() {
 
   return {
     kpis,
+    freshness,
     provincialCount,
     parties: parties.map((p, i) => ({ ...p, index: i })),
     nextEvent,

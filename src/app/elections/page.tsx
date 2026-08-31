@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Card, EmptyState, Stat } from "@/components/ui";
 import { ElectionBadge } from "@/components/status";
+import { SourceLine, VerifiedBadge } from "@/components/dashboard/trust";
 import { formatDate, formatNumber, humanize } from "@/lib/format";
 import { getTranslator } from "@/lib/locale-server";
 
@@ -21,6 +22,11 @@ export default async function ElectionsPage() {
       electionDate: true,
       totalSeats: true,
       sourceName: true,
+      sourceUrl: true,
+      verification: true,
+      verifiedAt: true,
+      verifiedNote: true,
+      bsYear: true,
       _count: { select: { candidacies: true, results: true } },
     },
   });
@@ -62,6 +68,16 @@ export default async function ElectionsPage() {
                       <Link href={`/elections/${election.slug}`}>{election.name}</Link>
                     </h3>
                     <ElectionBadge status={election.status} />
+                    <VerifiedBadge
+                      state={
+                        election.verification === "VERIFIED"
+                          ? "verified"
+                          : election.verification === "REJECTED"
+                            ? "unverified"
+                            : "historical"
+                      }
+                      t={t}
+                    />
                   </div>
                   <p className="small muted" style={{ margin: ".25rem 0 0" }}>
                     {humanize(election.type)} · {election.year}
@@ -69,10 +85,21 @@ export default async function ElectionsPage() {
                     {election.totalSeats ? ` · ${formatNumber(election.totalSeats)} seats` : ""}
                   </p>
                   <p className="small faint" style={{ margin: ".15rem 0 0" }}>
-                    {formatNumber(election._count.candidacies)} candidacies ·{" "}
-                    {formatNumber(election._count.results)} result records
-                    {election.sourceName ? ` · Source: ${election.sourceName}` : ""}
+                    {formatNumber(election._count.candidacies)} · {formatNumber(election._count.results)}
                   </p>
+                  <div style={{ marginTop: ".25rem" }}>
+                    <SourceLine
+                      t={t}
+                      sourceName={election.sourceName}
+                      sourceUrl={election.sourceUrl}
+                      verifiedAt={election.verifiedAt}
+                    />
+                  </div>
+                  {election.verification !== "VERIFIED" && election.verifiedNote ? (
+                    <div className="historical-note" style={{ marginTop: ".5rem" }}>
+                      {election.verifiedNote}
+                    </div>
+                  ) : null}
                 </div>
                 <Link className="btn btn-sm btn-ghost" href={`/elections/${election.slug}`}>
                   Open

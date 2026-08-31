@@ -449,6 +449,30 @@ const en = {
   "cd.minutes": "min",
   "cd.seconds": "sec",
   "cd.passed": "This milestone has passed",
+
+  // ---- trust layer
+  "trust.verified": "Verified",
+  "trust.unverified": "Unverified",
+  "trust.historical": "Historical",
+  "trust.official": "Official data",
+  "trust.source": "Source",
+  "trust.checked": "checked",
+  "trust.lastUpdated": "Last updated",
+  "trust.pendingReview": "Candidate records pending verification",
+  "trust.noVerifiedElection": "No verified current election on record",
+  "trust.latestElection": "Most recent verified election",
+  "trust.pollingDay": "Polling day",
+  "trust.seats": "seats",
+  "trust.fptp": "first-past-the-post",
+  "trust.pr": "proportional",
+  "trust.resultsAt": "Full results at the Election Commission",
+  "trust.countingDone": "Counting concluded",
+  "trust.noResultsHeld":
+    "Seat totals are not shown here: they were reported by a single source and this platform records a figure as fact only after cross-checking.",
+  "trust.historicalNote":
+    "Historical record. Kept for traceability and clearly separated from current data.",
+  "trust.unverifiedNote":
+    "This record could not be confirmed against an authoritative source and is not treated as current.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -858,6 +882,29 @@ const ne: Partial<Record<TranslationKey, string>> = {
   "cd.minutes": "मिनेट",
   "cd.seconds": "सेकेन्ड",
   "cd.passed": "यो मिति गुज्रिसक्यो",
+
+  "trust.verified": "प्रमाणित",
+  "trust.unverified": "अप्रमाणित",
+  "trust.historical": "ऐतिहासिक",
+  "trust.official": "आधिकारिक तथ्याङ्क",
+  "trust.source": "स्रोत",
+  "trust.checked": "जाँचिएको",
+  "trust.lastUpdated": "पछिल्लो अद्यावधिक",
+  "trust.pendingReview": "प्रमाणीकरण बाँकी उम्मेदवार विवरण",
+  "trust.noVerifiedElection": "हालको प्रमाणित निर्वाचन अभिलेख छैन",
+  "trust.latestElection": "पछिल्लो प्रमाणित निर्वाचन",
+  "trust.pollingDay": "मतदान दिन",
+  "trust.seats": "सिट",
+  "trust.fptp": "पहिलो हुने निर्वाचित",
+  "trust.pr": "समानुपातिक",
+  "trust.resultsAt": "पूर्ण परिणाम निर्वाचन आयोगमा",
+  "trust.countingDone": "मतगणना सम्पन्न",
+  "trust.noResultsHeld":
+    "दलगत सिट सङ्ख्या यहाँ देखाइएको छैन: एउटै स्रोतबाट आएकाले र यो प्लेटफर्मले भिडाएपछि मात्र तथ्यका रूपमा राख्ने भएकाले।",
+  "trust.historicalNote":
+    "ऐतिहासिक अभिलेख। पारदर्शिताका लागि राखिएको र हालको तथ्याङ्कबाट छुट्याइएको।",
+  "trust.unverifiedNote":
+    "यो अभिलेख आधिकारिक स्रोतसँग पुष्टि हुन सकेन र हालको मानिँदैन।",
 };
 
 const DICTIONARIES: Record<Locale, Partial<Record<TranslationKey, string>>> = { en, ne };
