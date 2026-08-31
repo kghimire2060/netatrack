@@ -86,7 +86,7 @@ export default async function CandidatePage({ params }: { params: Promise<{ slug
                 <dt>{t("cand.constituency")}</dt>
                 <dd>
                   {c.constituency ? (
-                    <Link href={`/constituencies/${c.constituency.slug}`}>{seatLabel}</Link>
+                    <Link href={`/constituency/${c.constituency.slug}`}>{seatLabel}</Link>
                   ) : c.prGroup ? (
                     <span title={t("cand.noSeatHint")}>
                       {t("cand.prMember")} <span className="faint">· {c.prGroup}</span>

@@ -42,7 +42,7 @@ export function ElectionTimeline({
 
             <p className="etimeline-meta">
               {e.constituencyName ? (
-                <Link href={`/constituencies/${e.constituencySlug}`}>{e.constituencyName}</Link>
+                <Link href={`/constituency/${e.constituencySlug}`}>{e.constituencyName}</Link>
               ) : (
                 <NotRecorded t={t} />
               )}

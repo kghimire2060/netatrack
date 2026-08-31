@@ -2,9 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Card, EmptyState, Pager } from "@/components/ui";
 import { LevelBadge } from "@/components/status";
-import { formatNumber } from "@/lib/format";
 import { getTranslator } from "@/lib/locale-server";
-import { enumLabel } from "@/lib/i18n";
+import { enumLabel, formatCount } from "@/lib/i18n";
+import { getGeographyTree } from "@/lib/constituencies";
+import { resolveProvince, provinceName, PROVINCES } from "@/lib/geography";
+import { GeographyNav } from "@/components/constituency/geography-nav";
 import type { GovernmentLevel, Prisma } from "@prisma/client";
 
 export const metadata = { title: "Constituencies" };
@@ -21,7 +23,11 @@ export default async function ConstituenciesPage({
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const level = (["FEDERAL", "PROVINCIAL", "LOCAL"] as const).find((l) => l === params.level);
   const where: Prisma.ConstituencyWhereInput = {
-    ...(params.province ? { province: params.province } : {}),
+    // The column holds "Bagmati" in one environment and "bagmati" in another,
+    // so the filter matches case-insensitively rather than on exact text.
+    ...(params.province
+      ? { province: { equals: params.province, mode: "insensitive" as const } }
+      : {}),
     ...(level ? { level: level as GovernmentLevel } : {}),
     ...(params.q
       ? {
@@ -55,11 +61,11 @@ export default async function ConstituenciesPage({
     },
   });
 
-  const provinces = await prisma.constituency.findMany({
-    select: { province: true },
-    distinct: ["province"],
-    orderBy: { province: "asc" },
-  });
+  // Province options come from the canonical registry, not from distinct
+  // column values, which would surface duplicate or lowercase entries.
+  const tree = await getGeographyTree();
+  const present = new Set(tree.provinces.map((p) => p.province.slug));
+  const provinces = PROVINCES.filter((p) => present.has(p.slug));
 
   return (
     <div className="wrap section">
@@ -77,14 +83,32 @@ export default async function ConstituenciesPage({
           </select>
           <select name="province" defaultValue={params.province ?? ""}>
             <option value="">{t("con.allProvinces")}</option>
-            {provinces.map((row) => (
-              <option key={row.province} value={row.province}>
-                {row.province}
+            {provinces.map((p) => (
+              <option key={p.slug} value={p.slug}>
+                {provinceName(p, locale)}
               </option>
             ))}
           </select>
           <button className="btn btn-sm">{t("common.filter")}</button>
         </form>
+      </Card>
+
+      <Card title={t("con.browse")} className="section-tight">
+        <GeographyNav
+          t={t}
+          locale={locale}
+          provinces={tree.provinces}
+          activeProvince={params.province ?? null}
+        />
+        {tree.unresolved.length > 0 ? (
+          <p className="small faint" style={{ marginTop: ".6rem" }}>
+            {formatCount(
+              tree.unresolved.reduce((n, u) => n + u.count, 0),
+              locale
+            )}{" "}
+            {t("con.unresolvedProvince")}: {tree.unresolved.map((u) => u.raw).join(", ")}
+          </p>
+        ) : null}
       </Card>
 
       {constituencies.length === 0 ? (
@@ -110,13 +134,13 @@ export default async function ConstituenciesPage({
             <tbody>
               {constituencies.map((constituency) => (
                 <tr key={constituency.id}>
-                  <td data-label="Constituency">
-                    <Link href={`/constituencies/${constituency.slug}`}>{constituency.name}</Link>
+                  <td data-label={t("con.title")}>
+                    <Link href={`/constituency/${constituency.slug}`}>{constituency.name}</Link>
                   </td>
-                  <td data-label="Level">
+                  <td data-label={t("con.level")}>
                     <LevelBadge level={constituency.level} />
                   </td>
-                  <td data-label="Type">
+                  <td data-label={t("con.type")}>
                     {constituency.localBodyType ? (
                       <span className="badge badge-muted">
                         {enumLabel(constituency.localBodyType, locale)}
@@ -125,19 +149,22 @@ export default async function ConstituenciesPage({
                       <span className="faint">—</span>
                     )}
                   </td>
-                  <td data-label="District">{constituency.district}</td>
-                  <td data-label="Province">{constituency.province}</td>
-                  <td className="num" data-label="Registered voters">
-                    {formatNumber(constituency.registeredVoters)}
+                  <td data-label={t("cand.district")}>{constituency.district}</td>
+                  <td data-label={t("con.province")}>
+                    {provinceName(resolveProvince(constituency.province), locale) ??
+                      constituency.province}
                   </td>
-                  <td className="num" data-label="Candidates">
-                    {constituency._count.candidates}
+                  <td className="num" data-label={t("con.registeredVoters")}>
+                    {constituency.registeredVoters === null ? "—" : formatCount(constituency.registeredVoters, locale)}
                   </td>
-                  <td className="num" data-label="Polling stations">
-                    {constituency.pollingStationCount ?? constituency._count.pollingStations}
+                  <td className="num" data-label={t("cand.title")}>
+                    {formatCount(constituency._count.candidates, locale)}
                   </td>
-                  <td className="num" data-label="Citizen issues">
-                    {constituency._count.complaints}
+                  <td className="num" data-label={t("con.pollingStations")}>
+                    {formatCount(constituency.pollingStationCount ?? constituency._count.pollingStations, locale)}
+                  </td>
+                  <td className="num" data-label={t("con.citizenIssues")}>
+                    {formatCount(constituency._count.complaints, locale)}
                   </td>
                 </tr>
               ))}

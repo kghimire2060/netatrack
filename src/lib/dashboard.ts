@@ -485,7 +485,7 @@ async function getRadar(): Promise<RadarItem[]> {
       kind: "result" as const,
       title: `${r.winnerName} — ${r.constituency.name}`,
       meta: `BS ${r.bsYear}`,
-      href: `/constituencies/${r.constituency.slug}`,
+      href: `/constituency/${r.constituency.slug}`,
       at: new Date(0),
       tone: "purple" as const,
     })),

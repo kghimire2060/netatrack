@@ -127,7 +127,7 @@ export default async function ResultsPage({
                           {results.map((result) => (
                             <tr key={result.id}>
                               <td data-label="Constituency">
-                                <Link href={`/constituencies/${result.constituency.slug}`}>
+                                <Link href={`/constituency/${result.constituency.slug}`}>
                                   {result.constituency.name}
                                 </Link>
                                 <div className="small faint">{result.constituency.district}</div>

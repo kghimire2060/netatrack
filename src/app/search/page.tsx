@@ -164,7 +164,7 @@ export default async function SearchPage({
         <Card title="Constituencies">
           <div className="chip-row">
             {constituencies.map((constituency) => (
-              <Link key={constituency.id} className="chip" href={`/constituencies/${constituency.slug}`}>
+              <Link key={constituency.id} className="chip" href={`/constituency/${constituency.slug}`}>
                 {constituency.name} — {constituency.district}
               </Link>
             ))}

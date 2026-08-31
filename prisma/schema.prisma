@@ -385,6 +385,10 @@ model Constituency {
 
   issues            ConstituencyIssue[]
   historicalResults HistoricalResult[]
+  /// Coverage tied to this seat. Editor-attached for the same reason as the
+  /// candidate link: matching a place name in article text would file national
+  /// stories under whichever constituency happened to be mentioned.
+  newsArticles      NewsArticle[]       @relation("ConstituencyNews")
 
   candidates      Candidate[]
   candidacies     Candidacy[]
@@ -991,6 +995,7 @@ model NewsArticle {
   revisions  NewsRevision[]
   factChecks FactCheck[]
   candidates Candidate[]    @relation("CandidateNews")
+  constituencies Constituency[] @relation("ConstituencyNews")
 
   @@index([status, publishedAt])
 }

@@ -147,7 +147,7 @@ export default async function ElectionPage({ params }: { params: Promise<{ slug:
                   <div key={name} style={{ marginBottom: "1.4rem" }}>
                     <div className="row-between">
                       <h3 style={{ margin: 0 }}>
-                        <Link href={`/constituencies/${results[0].constituency.slug}`}>{name}</Link>
+                        <Link href={`/constituency/${results[0].constituency.slug}`}>{name}</Link>
                       </h3>
                       <span className="small faint">
                         {results[0].constituency.district} ·{" "}
