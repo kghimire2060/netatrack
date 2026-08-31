@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { SourceType, VerificationTier } from "@prisma/client";
 import type { Translator } from "@/lib/i18n";
 import { formatDateTime, relativeTime } from "@/lib/format";
 
@@ -12,18 +13,96 @@ import { formatDateTime, relativeTime } from "@/lib/format";
 
 export type TrustState = "verified" | "unverified" | "historical";
 
-export function VerifiedBadge({ state, t }: { state: TrustState; t: Translator }) {
+const TIER_STYLE: Record<VerificationTier, { cls: string; icon: string }> = {
+  OFFICIAL: { cls: "trust-badge is-official", icon: "\u2713" },
+  NETATRACK: { cls: "trust-badge is-netatrack", icon: "\u2713" },
+  UNVERIFIED: { cls: "trust-badge is-unverified", icon: "!" },
+  DISPUTED: { cls: "trust-badge is-disputed", icon: "\u26a0" },
+};
+
+/**
+ * States a record's verification level.
+ *
+ * Prefer `tier` — it comes straight from the database column and distinguishes
+ * a record confirmed against the authority's own publication (OFFICIAL) from
+ * one we cross-checked against a secondary source (NETATRACK). The older
+ * `state` prop is kept for the few call sites that describe a presentation
+ * state rather than a stored tier, such as labelling a historical record.
+ */
+export function VerifiedBadge({
+  tier,
+  state,
+  t,
+}: {
+  tier?: VerificationTier;
+  state?: TrustState;
+  t: Translator;
+}) {
+  if (tier) {
+    const style = TIER_STYLE[tier];
+    return (
+      <span className={style.cls} title={t(`tier.${tier}.note`)}>
+        <span aria-hidden>{style.icon}</span>
+        {t(`tier.${tier}`)}
+      </span>
+    );
+  }
+
   const map: Record<TrustState, { cls: string; icon: string; key: Parameters<Translator>[0] }> = {
-    verified: { cls: "trust-badge is-verified", icon: "✓", key: "trust.verified" },
+    verified: { cls: "trust-badge is-verified", icon: "\u2713", key: "trust.verified" },
     unverified: { cls: "trust-badge is-unverified", icon: "!", key: "trust.unverified" },
-    historical: { cls: "trust-badge is-historical", icon: "◷", key: "trust.historical" },
+    historical: { cls: "trust-badge is-historical", icon: "\u25f7", key: "trust.historical" },
   };
-  const m = map[state];
+  const m = map[state ?? "unverified"];
   return (
     <span className={m.cls}>
       <span aria-hidden>{m.icon}</span>
       {t(m.key)}
     </span>
+  );
+}
+
+/**
+ * Every source behind one record, so a reader can check the claim rather than
+ * take the badge on faith. Renders nothing when there is nothing to cite —
+ * an empty list is never padded out.
+ */
+export function SourceList({
+  t,
+  citations,
+}: {
+  t: Translator;
+  citations: {
+    id: string;
+    sourceName: string;
+    sourceUrl: string | null;
+    sourceType: SourceType;
+    tier: VerificationTier;
+    note: string | null;
+  }[];
+}) {
+  if (citations.length === 0) {
+    return <p className="source-line">{t("tier.noSource")}</p>;
+  }
+  return (
+    <div className="source-list">
+      <h3 className="source-list-title">{t("tier.sources")}</h3>
+      <ul>
+        {citations.map((c) => (
+          <li key={c.id}>
+            <VerifiedBadge tier={c.tier} t={t} />{" "}
+            {c.sourceUrl ? (
+              <a href={c.sourceUrl} target="_blank" rel="noopener noreferrer">
+                {c.sourceName}
+              </a>
+            ) : (
+              <span>{c.sourceName}</span>
+            )}
+            {c.note ? <span className="source-note">{c.note}</span> : null}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -78,6 +157,7 @@ export function TrustBar({
   election: {
     name: string;
     slug: string;
+    tier: VerificationTier;
     sourceName: string | null;
     sourceUrl: string | null;
     verifiedAt: Date | null;
@@ -90,7 +170,7 @@ export function TrustBar({
     <div className="trust-bar">
       {election ? (
         <span className="trust-item">
-          <VerifiedBadge state="verified" t={t} />
+          <VerifiedBadge tier={election.tier} t={t} />
           <SourceLine
             t={t}
             sourceName={election.sourceName}

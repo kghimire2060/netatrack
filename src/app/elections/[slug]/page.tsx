@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Badge, Breadcrumb, Card, EmptyState, Meter, Stat } from "@/components/ui";
 import { ElectionBadge, VerificationBadge } from "@/components/status";
-import { SourceLine, VerifiedBadge } from "@/components/dashboard/trust";
+import { SourceLine, SourceList, VerifiedBadge } from "@/components/dashboard/trust";
 import { formatDate, formatDateTime, formatNumber, formatPercent, humanize } from "@/lib/format";
 import { getTranslator } from "@/lib/locale-server";
 
@@ -35,6 +35,17 @@ export default async function ElectionPage({ params }: { params: Promise<{ slug:
   });
 
   if (!election) notFound();
+
+  // Every source behind this record, so the tier badge can be checked rather
+  // than taken on faith.
+  const citations = await prisma.dataSource.findMany({
+    where: { entityType: "Election", entityId: election.id },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true, sourceName: true, sourceUrl: true,
+      sourceType: true, tier: true, note: true,
+    },
+  });
 
   const winners = election.results.filter((result) => result.isWinner);
   const totalVotes = election.results.reduce((sum, result) => sum + result.votes, 0);
@@ -70,16 +81,7 @@ export default async function ElectionPage({ params }: { params: Promise<{ slug:
           <div className="row" style={{ gap: ".5rem" }}>
             <h1 style={{ margin: 0 }}>{election.name}</h1>
             <ElectionBadge status={election.status} />
-            <VerifiedBadge
-              state={
-                election.verification === "VERIFIED"
-                  ? "verified"
-                  : election.verification === "REJECTED"
-                    ? "unverified"
-                    : "historical"
-              }
-              t={t}
-            />
+            <VerifiedBadge tier={election.tier} t={t} />
           </div>
           <p className="muted" style={{ margin: ".3rem 0 0" }}>
             {humanize(election.type)} · {election.year}
@@ -88,7 +90,7 @@ export default async function ElectionPage({ params }: { params: Promise<{ slug:
         </div>
       </div>
 
-      {election.verification !== "VERIFIED" && election.verifiedNote ? (
+      {election.tier !== "OFFICIAL" && election.verifiedNote ? (
         <div className="historical-note" style={{ margin: ".7rem 0" }}>
           {election.verifiedNote}
         </div>
@@ -112,17 +114,23 @@ export default async function ElectionPage({ params }: { params: Promise<{ slug:
         />
       </div>
 
-      <div className="notice notice-blue" style={{ marginTop: "1rem" }}>
-        <strong>Official data.</strong> Source: {election.sourceName ?? "not recorded"}
+      <div
+        className={`notice ${election.tier === "OFFICIAL" ? "notice-blue" : "notice-amber"}`}
+        style={{ marginTop: "1rem" }}
+      >
+        <strong>{t(`tier.${election.tier}`)}.</strong> {t(`tier.${election.tier}.note`)}{" "}
+        {t("trust.source")}: {election.sourceName ?? t("tier.noSource")}
         {election.sourceUrl ? (
           <>
             {" "}
             (<a href={election.sourceUrl} target="_blank" rel="noopener noreferrer nofollow">link</a>)
           </>
         ) : null}
-        . Last updated {formatDateTime(lastUpdated)}. Only results with a recorded source and a
-        verification decision appear here.
+        {lastUpdated ? <>. {t("trust.lastUpdated")} {formatDateTime(lastUpdated)}</> : null}. Only
+        results with a recorded source and a verification decision appear here.
       </div>
+
+      <SourceList t={t} citations={citations} />
 
       <div className="grid grid-sidebar" style={{ marginTop: "1rem" }}>
         <div className="stack">

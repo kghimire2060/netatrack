@@ -1,4 +1,5 @@
 import { prisma } from "./db";
+import { getCurrentElection } from "./elections";
 import { RATING_DIMENSIONS } from "./ratings";
 
 /**
@@ -137,24 +138,21 @@ export async function getDashboard() {
     prisma.electionEvent.findFirst({
       where: {
         startsAt: { not: null, gte: now },
-        election: { verification: "VERIFIED" },
+        // Only a milestone belonging to a presentable election can drive a
+        // countdown; an unverified record must not produce a live clock.
+        election: { tier: { in: ["OFFICIAL", "NETATRACK"] } },
       },
       orderBy: { startsAt: "asc" },
       select: {
         title: true, startsAt: true, bsDate: true, detail: true,
         sourceName: true, sourceUrl: true,
-        election: { select: { name: true, slug: true } },
+        election: { select: { name: true, slug: true, tier: true } },
       },
     }),
-    prisma.election.findFirst({
-      where: { verification: "VERIFIED" },
-      orderBy: [{ electionDate: "desc" }, { year: "desc" }],
-      select: {
-        name: true, slug: true, status: true, bsYear: true, year: true,
-        totalSeats: true, fptpSeats: true, prSeats: true, electionDate: true,
-        sourceName: true, sourceUrl: true, verifiedAt: true, updatedAt: true,
-      },
-    }),
+    // Which election is "current" is decided in one place, by status and date,
+    // so the homepage cannot drift from the elections pages or name a year of
+    // its own. See src/lib/elections.ts.
+    getCurrentElection(),
   ]);
 
   const partyIndex = new Map(parties.map((p, i) => [p.id, i]));

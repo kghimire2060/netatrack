@@ -43,9 +43,12 @@ const VERIFICATION_TONE: Record<VerificationStatus, Tone> = {
 
 const ELECTION_TONE: Record<ElectionStatus, Tone> = {
   UPCOMING: "info",
-  ACTIVE: "warn",
+  LIVE: "warn",
   COUNTING: "warn",
   COMPLETED: "good",
+  ARCHIVED: "muted",
+  // Deprecated statuses, kept so existing rows still render a tone.
+  ACTIVE: "warn",
   CANCELLED: "muted",
 };
 

@@ -53,7 +53,7 @@ export default async function HomePage() {
                 <>
                   <div className="countdown-head">
                     <span className="badge badge-bad">{t("sec.countdown")}</span>
-                    <VerifiedBadge state="verified" t={t} />
+                    <VerifiedBadge tier={d.nextEvent.election.tier} t={t} />
                   </div>
                   <h3 className="countdown-title">{d.nextEvent.title}</h3>
                   <div className="small faint">
@@ -78,7 +78,7 @@ export default async function HomePage() {
                 <>
                   <div className="countdown-head">
                     <span className="badge badge-navy">{t("trust.latestElection")}</span>
-                    <VerifiedBadge state="verified" t={t} />
+                    <VerifiedBadge tier={d.election.tier} t={t} />
                   </div>
                   <h3 className="countdown-title">{d.election.name}</h3>
                   <dl className="election-facts">

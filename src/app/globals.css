@@ -529,6 +529,9 @@ html[lang="ne"] .admin-side .group { text-transform: none; letter-spacing: 0; fo
 }
 .notice-blue { border-inline-start-color: var(--blue); background: var(--tint-blue); color: var(--ink); }
 .notice-purple { border-inline-start-color: var(--purple); background: var(--tint-purple); color: #4b31a6; }
+/* Used when a record is below OFFICIAL: the page still shows it, but the
+   surface says so rather than borrowing the authoritative blue. */
+.notice-amber { border-inline-start-color: #d97706; background: var(--tint-orange); color: var(--ink); }
 :root[data-theme="dark"] .notice { color: #f7bd74; }
 :root[data-theme="dark"] .notice-purple { color: #c2b0f7; }
 
@@ -948,8 +951,31 @@ html[lang="ne"] .radar-kind { text-transform: none; letter-spacing: 0; font-size
 .trust-badge.is-verified { background: var(--tint-green); color: #15803d; }
 .trust-badge.is-unverified { background: var(--tint-orange); color: #b4650f; }
 .trust-badge.is-historical { background: var(--surface-sunken); color: var(--ink-muted); }
-:root[data-theme="dark"] .trust-badge.is-verified { color: #4ecb77; }
+
+/* Verification tiers. Green is reserved for OFFICIAL — confirmed against the
+   authority's own record. NetaTrack's own cross-check reads as a distinct,
+   deliberately cooler blue so the two are never mistaken for each other. */
+.trust-badge.is-official { background: var(--tint-green); color: #15803d; }
+.trust-badge.is-netatrack { background: var(--tint-blue); color: #1d4ed8; }
+.trust-badge.is-disputed { background: var(--tint-red); color: #b91c1c; }
+
+:root[data-theme="dark"] .trust-badge.is-verified,
+:root[data-theme="dark"] .trust-badge.is-official { color: #4ecb77; }
 :root[data-theme="dark"] .trust-badge.is-unverified { color: #f5a94f; }
+:root[data-theme="dark"] .trust-badge.is-netatrack { color: #7aa7f5; }
+:root[data-theme="dark"] .trust-badge.is-disputed { color: #f08a8a; }
+
+/* Citation list under an election record. */
+.source-list { margin-top: 1rem; }
+.source-list-title {
+  font-size: .72rem; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-muted); margin: 0 0 .5rem;
+}
+.source-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.source-list li { font-size: .82rem; line-height: 1.5; }
+.source-list a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+.source-list a:hover { color: var(--dv-1); }
+.source-note { display: block; color: var(--ink-muted); font-size: .76rem; margin-top: .15rem; }
 
 .source-line { font-size: .76rem; color: var(--ink-muted); }
 .source-line a { color: var(--ink-muted); text-decoration: underline; text-underline-offset: 2px; }
@@ -984,3 +1010,198 @@ html[lang="ne"] .radar-kind { text-transform: none; letter-spacing: 0; font-size
   background: var(--surface-sunken); color: var(--ink-faint);
   font-size: .64rem; font-weight: 800; letter-spacing: .04em; white-space: nowrap;
 }
+
+/* =========================================================================
+   CANDIDATE PROFILE (Phase 2)
+   Breakpoints follow the existing scale: 1000/900 for structure, 620 for
+   single-column. Every colour comes from a token so both themes resolve.
+   ========================================================================= */
+
+.profile { --profile-gap: 1rem; }
+
+/* ------------------------------- identity ------------------------------- */
+.profile-hero { padding-bottom: 0; }
+.profile-hero-main { display: flex; align-items: flex-start; gap: 1.1rem; }
+.profile-hero-main .grow { min-width: 0; }
+
+.profile-badges { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.profile-badges h1 { margin: 0; font-size: 1.6rem; line-height: 1.15; }
+
+.profile-identity {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: .75rem 1.2rem; margin: .9rem 0 0;
+}
+.profile-identity dt {
+  font-size: .68rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-muted); margin-bottom: .15rem;
+}
+.profile-identity dd { margin: 0; font-size: .92rem; font-weight: 600; color: var(--ink); }
+
+.profile-score { text-align: center; flex: 0 0 auto; }
+
+.profile-meta {
+  display: flex; flex-wrap: wrap; gap: .6rem 1.6rem; align-items: center;
+  margin-top: 1.1rem; padding: .7rem 0 0; border-top: 1px solid var(--border);
+  font-size: .8rem; color: var(--ink-muted);
+}
+.profile-meta strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+.profile-completeness { display: flex; align-items: center; gap: .5rem; }
+.profile-completeness .meter { width: 90px; }
+
+/* ----------------------------- summary stats ---------------------------- */
+.profile-stats {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--profile-gap); margin-top: var(--profile-gap);
+}
+.profile-grid { margin-top: var(--profile-gap); }
+
+/* --------------------------- unavailable state -------------------------- */
+/* Most profiles are mostly empty, so this state is the common case and has to
+   read as transparency rather than breakage. */
+.unavailable {
+  display: flex; gap: .8rem; align-items: flex-start;
+  padding: 1rem 1.1rem; border: 1px dashed var(--border);
+  border-radius: var(--radius); background: var(--surface-sunken);
+}
+.unavailable-mark {
+  font-size: 1.1rem; font-weight: 800; color: var(--ink-faint);
+  line-height: 1.4; flex: 0 0 auto;
+}
+.unavailable strong { display: block; font-size: .92rem; color: var(--ink); }
+.unavailable p { margin: .25rem 0 0; }
+
+.not-recorded { color: var(--ink-faint); font-style: italic; font-weight: 400; }
+.withheld { color: var(--ink-muted); font-size: .85rem; }
+
+/* ---------------------------- election timeline ------------------------- */
+.etimeline { list-style: none; margin: 0; padding: 0; position: relative; }
+.etimeline::before {
+  content: ""; position: absolute; inset-inline-start: 5px; top: .5rem; bottom: .5rem;
+  width: 2px; background: var(--border);
+}
+.etimeline > li { position: relative; padding-inline-start: 1.6rem; padding-bottom: 1.3rem; }
+.etimeline > li:last-child { padding-bottom: 0; }
+
+.etimeline-node {
+  position: absolute; inset-inline-start: 0; top: .35rem;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--dv-mid);
+}
+.etimeline > li.is-won .etimeline-node { border-color: var(--dv-pos); background: var(--dv-pos); }
+.etimeline > li.is-lost .etimeline-node { border-color: var(--dv-mid); }
+
+.etimeline-head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.etimeline-title { font-weight: 700; font-size: .98rem; }
+.etimeline-meta { margin: .25rem 0 .6rem; font-size: .84rem; color: var(--ink-muted); }
+
+.etimeline-figures {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .6rem; margin: 0; padding: .7rem .85rem;
+  background: var(--surface-sunken); border-radius: var(--radius);
+}
+.etimeline-figures dt {
+  font-size: .66rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.etimeline-figures dd {
+  margin: .1rem 0 0; font-size: 1rem; font-weight: 700;
+  font-variant-numeric: tabular-nums; color: var(--ink);
+}
+.etimeline .source-line { display: block; margin-top: .5rem; }
+
+/* ------------------------------- performance ---------------------------- */
+.perf-period { padding: .9rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); }
+.perf-head { display: flex; justify-content: space-between; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
+.perf-head h3 { margin: 0; font-size: .95rem; }
+
+.perf-attendance { display: flex; align-items: center; gap: .7rem; margin: .8rem 0; flex-wrap: wrap; }
+.perf-attendance .label { font-size: .8rem; font-weight: 700; color: var(--ink-muted); min-width: 5.5rem; }
+.perf-attendance .meter { flex: 1 1 120px; }
+.perf-attendance .value { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.perf-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .7rem; margin: 0; }
+.perf-metrics dt { font-size: .7rem; font-weight: 700; color: var(--ink-muted); }
+.perf-metrics dd { margin: .1rem 0 0; font-size: 1.1rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* ------------------------------ commitments ----------------------------- */
+.promise-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; margin-bottom: .7rem; }
+.promise-total { font-size: 2rem; font-weight: 800; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.promise-total-label { font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); }
+.promise-pct { text-align: right; }
+.promise-pct .value { display: block; font-size: 1.4rem; font-weight: 800; color: var(--dv-pos); font-variant-numeric: tabular-nums; }
+.promise-pct .label { font-size: .74rem; color: var(--ink-muted); }
+.promise-bar { height: 14px; }
+
+/* Texture separates the three terminal states, which share a neutral fill so
+   the bar keeps only three hues — see the note in promise-summary.tsx. */
+.seg.is-hatched, .swatch.is-hatched {
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.55) 0 2px, transparent 2px 5px);
+}
+.seg.is-dotted, .swatch.is-dotted {
+  background-image: repeating-linear-gradient(135deg, rgba(0,0,0,.22) 0 2px, transparent 2px 5px);
+}
+.swatch.is-hatched, .swatch.is-dotted { border: 1px solid var(--border); }
+
+.promise-legend {
+  list-style: none; margin: .8rem 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .45rem .9rem;
+  font-size: .82rem;
+}
+.promise-legend li { display: flex; align-items: center; gap: .45rem; }
+.promise-legend li.is-zero { opacity: .55; }
+.promise-legend .legend-label { color: var(--ink-muted); flex: 1 1 auto; }
+
+/* --------------------------------- updates ------------------------------ */
+.update-row { padding-bottom: .7rem; border-bottom: 1px solid var(--border); }
+.update-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.update-title { font-weight: 700; }
+.update-row p { margin: .25rem 0; }
+.subhead { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); margin: 0 0 .5rem; }
+
+/* -------------------------------- sources ------------------------------- */
+.source-records { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; font-size: .84rem; }
+.source-records > li { padding-inline-start: .7rem; border-inline-start: 2px solid var(--border); }
+.source-records p { margin: .2rem 0; }
+.source-field {
+  display: inline-block; margin-inline-start: .4rem; padding: .05rem .35rem;
+  font-size: .68rem; font-weight: 700; border-radius: 4px;
+  background: var(--surface-sunken); color: var(--ink-muted);
+}
+
+/* ------------------------------- disclaimer ----------------------------- */
+.profile-disclaimer {
+  margin: 1.4rem 0 0; padding: .85rem 1rem;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface-sunken); color: var(--ink-muted);
+  font-size: .82rem; line-height: 1.55; text-align: center;
+}
+
+/* ------------------------------- responsive ----------------------------- */
+@media (max-width: 1000px) {
+  .profile-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .etimeline-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .profile-hero-main { flex-wrap: wrap; gap: .9rem; }
+  .profile-badges h1 { font-size: 1.3rem; }
+  /* Flows after the name rather than above it: a score shown before the
+     reader knows whose profile it is has nothing to attach to. */
+  .profile-score {
+    order: 3; display: flex; align-items: center; gap: .6rem;
+    width: 100%; text-align: start;
+    padding-top: .7rem; border-top: 1px solid var(--border);
+  }
+  .profile-identity { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem .9rem; }
+  .profile-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .profile-meta { flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .promise-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .perf-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 400px) {
+  /* Long free-text values need the full width; the short stat figures do not,
+     so they stay two-up rather than stretching the page. */
+  .profile-identity, .etimeline-figures { grid-template-columns: minmax(0, 1fr); }
+}
+.profile-score .no-ratings { max-width: 12rem; }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { getCurrentElection, listElections } from "@/lib/elections";
 import { Badge, Card, EmptyState, Meter, Stat } from "@/components/ui";
 import { formatDateTime, formatNumber, formatPercent, humanize } from "@/lib/format";
 import { getTranslator } from "@/lib/locale-server";
@@ -15,12 +16,12 @@ export default async function ResultsPage({
   const { t } = await getTranslator();
   const params = await searchParams;
 
-  const elections = await prisma.election.findMany({
-    orderBy: [{ year: "desc" }],
-    select: { slug: true, name: true, year: true, status: true, totalSeats: true, sourceName: true, sourceUrl: true },
-  });
+  const [elections, current] = await Promise.all([listElections(), getCurrentElection()]);
 
-  const selectedSlug = params.election ?? elections[0]?.slug;
+  // Default to the election the rest of the site treats as current, rather
+  // than whichever row happens to sort first — that could be an archived or
+  // unverified record.
+  const selectedSlug = params.election ?? current?.slug ?? elections[0]?.slug;
   const election = selectedSlug
     ? await prisma.election.findUnique({
         where: { slug: selectedSlug },

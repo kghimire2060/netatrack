@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db";
+import { listElections } from "@/lib/elections";
 import { Card, EmptyState, Stat } from "@/components/ui";
 import { ElectionBadge } from "@/components/status";
 import { SourceLine, VerifiedBadge } from "@/components/dashboard/trust";
@@ -10,29 +10,14 @@ export const metadata = { title: "Elections" };
 
 export default async function ElectionsPage() {
   const { t } = await getTranslator();
-  const elections = await prisma.election.findMany({
-    orderBy: [{ year: "desc" }, { name: "asc" }],
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      type: true,
-      year: true,
-      status: true,
-      electionDate: true,
-      totalSeats: true,
-      sourceName: true,
-      sourceUrl: true,
-      verification: true,
-      verifiedAt: true,
-      verifiedNote: true,
-      bsYear: true,
-      _count: { select: { candidacies: true, results: true } },
-    },
-  });
+  // Read through the shared service so this page and the homepage can never
+  // disagree about which elections exist or how they rank.
+  const elections = await listElections();
 
+  // ACTIVE is the deprecated spelling of LIVE; both are counted so legacy rows
+  // are not silently dropped from the tally.
   const active = elections.filter((election) =>
-    ["UPCOMING", "ACTIVE", "COUNTING"].includes(election.status)
+    ["UPCOMING", "LIVE", "ACTIVE", "COUNTING"].includes(election.status)
   );
 
   return (
@@ -68,16 +53,7 @@ export default async function ElectionsPage() {
                       <Link href={`/elections/${election.slug}`}>{election.name}</Link>
                     </h3>
                     <ElectionBadge status={election.status} />
-                    <VerifiedBadge
-                      state={
-                        election.verification === "VERIFIED"
-                          ? "verified"
-                          : election.verification === "REJECTED"
-                            ? "unverified"
-                            : "historical"
-                      }
-                      t={t}
-                    />
+                    <VerifiedBadge tier={election.tier} t={t} />
                   </div>
                   <p className="small muted" style={{ margin: ".25rem 0 0" }}>
                     {humanize(election.type)} · {election.year}
@@ -95,7 +71,7 @@ export default async function ElectionsPage() {
                       verifiedAt={election.verifiedAt}
                     />
                   </div>
-                  {election.verification !== "VERIFIED" && election.verifiedNote ? (
+                  {election.tier !== "OFFICIAL" && election.verifiedNote ? (
                     <div className="historical-note" style={{ marginTop: ".5rem" }}>
                       {election.verifiedNote}
                     </div>

@@ -481,6 +481,118 @@ const en = {
     "Historical record. Kept for traceability and clearly separated from current data.",
   "trust.unverifiedNote":
     "This record could not be confirmed against an authoritative source and is not treated as current.",
+
+  // ---- verification tiers (VerificationTier)
+  "tier.OFFICIAL": "Officially Verified",
+  "tier.NETATRACK": "NetaTrack Verified",
+  "tier.UNVERIFIED": "Unverified",
+  "tier.DISPUTED": "Disputed",
+  "tier.OFFICIAL.note":
+    "Confirmed against the issuing authority's own published record.",
+  "tier.NETATRACK.note":
+    "Cross-checked by NetaTrack against a published secondary source. Not yet confirmed against the authority's own record.",
+  "tier.UNVERIFIED.note":
+    "Not yet confirmed against any published source. Shown for transparency, not as fact.",
+  "tier.DISPUTED.note":
+    "Published sources disagree on this record. Treat with caution until resolved.",
+  "tier.sources": "Sources",
+  "tier.noSource": "No source recorded",
+  "tier.dataAsOf": "Data as of",
+
+  // ---- candidate profile (Phase 2)
+  "cand.notRecorded": "Not recorded yet",
+  "cand.notRecordedHint":
+    "No sourced record has been added for this section. NetaTrack shows a gap rather than an estimate.",
+  "cand.notRecordedShort": "Not recorded",
+  "cand.lastUpdated": "Last updated",
+  "cand.disclaimer":
+    "NetaTrack provides factual information for public awareness and comparison. It does not endorse or recommend any political party or candidate.",
+  "cand.dataCompleteness": "Profile data recorded",
+  "cand.completenessHint": "sections with at least one sourced record",
+  "cand.currentPosition": "Current position",
+  "cand.politicalExperience": "Political experience",
+  "cand.province": "Province",
+  "cand.constituency": "Constituency",
+  "cand.prMember": "Proportional representation member",
+  "cand.noSeatHint": "Elected from the proportional representation list, so no single constituency applies.",
+  "cand.educationUnverified":
+    "An education record exists but no source cites it, so it is withheld. NetaTrack publishes this field only when a source backs it.",
+
+  // election history
+  "cand.electionHistory": "Election history",
+  "cand.historyEmpty": "No election record for this politician yet",
+  "cand.historyEmptyHint":
+    "Candidacies and official results appear here once the Election Commission record for the contest has been entered and verified.",
+  "cand.elected": "Elected",
+  "cand.notElected": "Not elected",
+  "cand.resultPending": "No published result",
+  "cand.bs": "BS",
+  "cand.votes": "Votes",
+  "cand.voteShare": "Vote share",
+  "cand.rank": "Rank",
+  "cand.marginWon": "Won by",
+  "cand.marginBehind": "Behind winner by",
+
+  // performance
+  "cand.politicalPerformance": "Political performance",
+  "cand.performanceEmpty": "No performance record published",
+  "cand.performanceEmptyHint":
+    "Attendance, questions, bills and committee activity appear here when a reliable published record exists. NetaTrack does not estimate these figures.",
+  "cand.performanceNote":
+    "Objective, source-backed activity records. Kept separate from perception-based ratings.",
+  "cand.mAttendance": "Attendance",
+  "cand.mQuestions": "Questions raised",
+  "cand.mBills": "Bills and proposals",
+  "cand.mCommittee": "Committee meetings",
+  "cand.mLocal": "Constituency activities",
+  "cand.mResponses": "Issue responses",
+
+  // commitments
+  "cand.pTotal": "Total commitments",
+  "cand.pCompleted": "Completed",
+  "cand.pInProgress": "In progress",
+  "cand.pDelayed": "Delayed",
+  "cand.pNotStarted": "Not started",
+  "cand.pCancelled": "Cancelled",
+  "cand.pUnknown": "Unverified",
+  "cand.pCompletedShare": "completed",
+  "cand.promisesEmpty": "No commitments recorded",
+  "cand.promisesEmptyHint":
+    "Manifesto commitments are added with a source and tracked over time. None have been recorded for this politician.",
+
+  // news
+  "cand.news": "Latest updates",
+  "cand.newsEmpty": "No linked coverage yet",
+  "cand.newsEmptyHint":
+    "Articles are attached to a politician by an editor. NetaTrack does not match names in article text, which would attribute stories wrongly.",
+
+  // states
+  "cand.errorTitle": "This profile could not be loaded",
+  "cand.errorHint":
+    "Something went wrong reading the record. The data is unchanged — try again, and if it persists the fault is on our side.",
+  "cand.retry": "Try again",
+  "cand.loading": "Loading",
+  "cand.independent": "Independent",
+  "cand.ratings": "ratings",
+  "cand.noRatingsYet": "No ratings yet. Be the first to rate this politician.",
+  "cand.distribution": "Distribution",
+  "cand.opinionNote": "User-generated public opinion. Not an official election result.",
+  "cand.rateLogin": "to rate. Only authenticated users can submit ratings, and each account may rate a politician once.",
+  "cand.rateOwn": "You cannot rate your own profile.",
+  "cand.contestsRecorded": "contests recorded",
+  "cand.termsHint": "terms in office",
+  "cand.sourcesCount": "Sources",
+  "cand.sourcesHint": "citations on this profile",
+  "cand.promise": "Commitment",
+  "cand.status": "Status",
+  "cand.evidence": "Evidence",
+  "cand.documents": "Candidate-submitted documents",
+  "cand.noSourceRecords": "No sources attached",
+  "cand.noSourceHint": "Nothing on this profile has a citation yet. Treat every field as unverified until one is added.",
+  "cand.factCheckNote": "Fact checks are independent editorial records. A politician may attach a response but cannot change a verdict.",
+  "cand.claimBody": "Politicians can claim a profile and edit permitted fields after identity review. Editorial records, verification decisions and fact-checks stay independent.",
+  "cand.claimCta": "Claim this profile",
+  "nav.methodology": "Methodology",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -921,6 +1033,111 @@ const ne: Partial<Record<TranslationKey, string>> = {
     "ऐतिहासिक अभिलेख। पारदर्शिताका लागि राखिएको र हालको तथ्याङ्कबाट छुट्याइएको।",
   "trust.unverifiedNote":
     "यो अभिलेख आधिकारिक स्रोतसँग पुष्टि हुन सकेन र हालको मानिँदैन।",
+
+  // ---- प्रमाणीकरण तह
+  "tier.OFFICIAL": "आधिकारिक रूपमा प्रमाणित",
+  "tier.NETATRACK": "NetaTrack प्रमाणित",
+  "tier.UNVERIFIED": "अप्रमाणित",
+  "tier.DISPUTED": "विवादित",
+  "tier.OFFICIAL.note": "सम्बन्धित निकायको आफ्नै प्रकाशित अभिलेखसँग भिडाइएको।",
+  "tier.NETATRACK.note":
+    "NetaTrack ले प्रकाशित दोस्रो स्रोतसँग भिडाएको। निकायको आफ्नै अभिलेखबाट अझै पुष्टि भइसकेको छैन।",
+  "tier.UNVERIFIED.note":
+    "कुनै प्रकाशित स्रोतबाट अझै पुष्टि भएको छैन। पारदर्शिताका लागि देखाइएको, तथ्यका रूपमा होइन।",
+  "tier.DISPUTED.note": "प्रकाशित स्रोतहरूबीच यस अभिलेखमा मतभेद छ। नखुलेसम्म सावधानी अपनाउनुहोस्।",
+  "tier.sources": "स्रोतहरू",
+  "tier.noSource": "कुनै स्रोत अभिलेख छैन",
+  "tier.dataAsOf": "तथ्याङ्क मिति",
+
+  // ---- उम्मेदवार प्रोफाइल
+  "cand.notRecorded": "अझै अभिलेख छैन",
+  "cand.notRecordedHint":
+    "यस खण्डका लागि स्रोतसहितको अभिलेख थपिएको छैन। NetaTrack अनुमान होइन, रिक्तता नै देखाउँछ।",
+  "cand.notRecordedShort": "अभिलेख छैन",
+  "cand.lastUpdated": "पछिल्लो अद्यावधिक",
+  "cand.disclaimer":
+    "NetaTrack ले जनचेतना र तुलनाका लागि तथ्यपरक सूचना उपलब्ध गराउँछ। यसले कुनै पनि राजनीतिक दल वा उम्मेदवारलाई समर्थन वा सिफारिस गर्दैन।",
+  "cand.dataCompleteness": "अभिलेख भएका खण्ड",
+  "cand.completenessHint": "कम्तीमा एउटा स्रोतसहितको अभिलेख भएका खण्ड",
+  "cand.currentPosition": "हालको पद",
+  "cand.politicalExperience": "राजनीतिक अनुभव",
+  "cand.province": "प्रदेश",
+  "cand.constituency": "निर्वाचन क्षेत्र",
+  "cand.prMember": "समानुपातिक सदस्य",
+  "cand.noSeatHint": "समानुपातिक सूचीबाट निर्वाचित भएकाले कुनै एक निर्वाचन क्षेत्र लागू हुँदैन।",
+  "cand.educationUnverified":
+    "शिक्षाको विवरण छ तर कुनै स्रोतले पुष्टि नगरेकाले प्रकाशित गरिएको छैन। स्रोत भएमा मात्र यो विवरण देखाइन्छ।",
+
+  "cand.electionHistory": "निर्वाचन इतिहास",
+  "cand.historyEmpty": "यी नेताको निर्वाचन अभिलेख छैन",
+  "cand.historyEmptyHint":
+    "निर्वाचन आयोगको अभिलेख प्रविष्ट र प्रमाणित भएपछि उम्मेदवारी र आधिकारिक परिणाम यहाँ देखिनेछन्।",
+  "cand.elected": "निर्वाचित",
+  "cand.notElected": "निर्वाचित भएनन्",
+  "cand.resultPending": "प्रकाशित परिणाम छैन",
+  "cand.bs": "वि.सं.",
+  "cand.votes": "मत",
+  "cand.voteShare": "मत हिस्सा",
+  "cand.rank": "क्रम",
+  "cand.marginWon": "यति मतले विजयी",
+  "cand.marginBehind": "विजेताभन्दा यति मत पछाडि",
+
+  "cand.politicalPerformance": "राजनीतिक कार्यसम्पादन",
+  "cand.performanceEmpty": "कार्यसम्पादन अभिलेख प्रकाशित छैन",
+  "cand.performanceEmptyHint":
+    "भरपर्दो प्रकाशित अभिलेख भएमा उपस्थिति, प्रश्न, विधेयक र समिति सहभागिता यहाँ देखिनेछ। NetaTrack यी अङ्क अनुमान गर्दैन।",
+  "cand.performanceNote":
+    "वस्तुनिष्ठ, स्रोतसहितका क्रियाकलाप अभिलेख। धारणामा आधारित मूल्याङ्कनभन्दा छुट्टै राखिएको।",
+  "cand.mAttendance": "उपस्थिति",
+  "cand.mQuestions": "उठाइएका प्रश्न",
+  "cand.mBills": "विधेयक तथा प्रस्ताव",
+  "cand.mCommittee": "समिति बैठक",
+  "cand.mLocal": "क्षेत्रगत क्रियाकलाप",
+  "cand.mResponses": "मुद्दामा प्रतिक्रिया",
+
+  "cand.pTotal": "कुल प्रतिबद्धता",
+  "cand.pCompleted": "पूरा भएको",
+  "cand.pInProgress": "प्रगतिमा",
+  "cand.pDelayed": "ढिलाइ",
+  "cand.pNotStarted": "सुरु नभएको",
+  "cand.pCancelled": "रद्द",
+  "cand.pUnknown": "अप्रमाणित",
+  "cand.pCompletedShare": "पूरा",
+  "cand.promisesEmpty": "कुनै प्रतिबद्धता अभिलेख छैन",
+  "cand.promisesEmptyHint":
+    "घोषणापत्रका प्रतिबद्धता स्रोतसहित थपिन्छन् र समयक्रममा अनुगमन गरिन्छ। यी नेताको हकमा कुनै अभिलेख छैन।",
+
+  "cand.news": "पछिल्ला अद्यावधिक",
+  "cand.newsEmpty": "सम्बन्धित समाचार जोडिएको छैन",
+  "cand.newsEmptyHint":
+    "सम्पादकले समाचारलाई नेतासँग जोड्छन्। समाचारको पाठमा नाम खोजेर स्वतः जोड्दा गलत आरोपण हुन सक्ने भएकाले त्यसो गरिँदैन।",
+
+  "cand.errorTitle": "यो प्रोफाइल लोड गर्न सकिएन",
+  "cand.errorHint":
+    "अभिलेख पढ्ने क्रममा त्रुटि भयो। तथ्याङ्क यथावत् छ — पुनः प्रयास गर्नुहोस्; दोहोरिए यो हाम्रो पक्षको समस्या हो।",
+  "cand.retry": "पुनः प्रयास",
+  "cand.loading": "लोड हुँदै",
+  "cand.independent": "स्वतन्त्र",
+  "cand.ratings": "मूल्याङ्कन",
+  "cand.noRatingsYet": "अहिलेसम्म कुनै मूल्याङ्कन छैन। पहिलो मूल्याङ्कन तपाईंले गर्नुहोस्।",
+  "cand.distribution": "वितरण",
+  "cand.opinionNote": "प्रयोगकर्ताबाट प्राप्त जनमत। यो आधिकारिक निर्वाचन परिणाम होइन।",
+  "cand.rateLogin": "गरेर मूल्याङ्कन गर्नुहोस्। प्रमाणित प्रयोगकर्ताले मात्र मूल्याङ्कन गर्न सक्छन्, र प्रत्येक खाताले एक नेतालाई एकपटक मात्र मूल्याङ्कन गर्न पाउँछ।",
+  "cand.rateOwn": "तपाईंले आफ्नै प्रोफाइल मूल्याङ्कन गर्न सक्नुहुन्न।",
+  "cand.contestsRecorded": "अभिलेख भएका निर्वाचन",
+  "cand.termsHint": "कार्यकाल",
+  "cand.sourcesCount": "स्रोत",
+  "cand.sourcesHint": "यस प्रोफाइलका उद्धरण",
+  "cand.promise": "प्रतिबद्धता",
+  "cand.status": "स्थिति",
+  "cand.evidence": "प्रमाण",
+  "cand.documents": "उम्मेदवारले पेस गरेका कागजात",
+  "cand.noSourceRecords": "कुनै स्रोत जोडिएको छैन",
+  "cand.noSourceHint": "यस प्रोफाइलको कुनै पनि विवरणमा उद्धरण छैन। स्रोत नथपिएसम्म सबै विवरण अप्रमाणित मान्नुहोस्।",
+  "cand.factCheckNote": "तथ्य जाँच स्वतन्त्र सम्पादकीय अभिलेख हो। नेताले प्रतिक्रिया राख्न सक्छन् तर निष्कर्ष परिवर्तन गर्न सक्दैनन्।",
+  "cand.claimBody": "पहिचान पुष्टिपछि नेताहरूले प्रोफाइल दाबी गरी अनुमति भएका विवरण सम्पादन गर्न सक्छन्। सम्पादकीय अभिलेख, प्रमाणीकरण निर्णय र तथ्य जाँच स्वतन्त्र रहन्छन्।",
+  "cand.claimCta": "यो प्रोफाइल दाबी गर्नुहोस्",
+  "nav.methodology": "कार्यविधि",
 };
 
 const DICTIONARIES: Record<Locale, Partial<Record<TranslationKey, string>>> = { en, ne };
@@ -946,6 +1163,22 @@ export function localizeDigits(value: string, locale: Locale): string {
 export function formatCount(value: number | null | undefined, locale: Locale): string {
   if (value === null || value === undefined) return "—";
   return localizeDigits(value.toLocaleString("en-US"), locale);
+}
+
+/**
+ * A percentage in the reader's own numerals.
+ *
+ * `formatPercent` in lib/format.ts stays locale-blind because admin tables and
+ * exports want a stable Latin form; public pages use this so a Nepali profile
+ * does not mix Devanagari vote counts with Latin vote shares.
+ */
+export function formatPct(
+  value: number | null | undefined,
+  locale: Locale,
+  digits = 2
+): string {
+  if (value === null || value === undefined) return "—";
+  return localizeDigits(`${value.toFixed(digits)}%`, locale);
 }
 
 
@@ -1009,6 +1242,7 @@ const ENUM_NE: Record<string, string> = {
 
   // elections
   UPCOMING: "आगामी",
+  LIVE: "मतदान जारी",
   COUNTING: "मतगणना",
 
   // roles

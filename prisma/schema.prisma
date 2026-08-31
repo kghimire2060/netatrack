@@ -80,10 +80,45 @@ enum ElectionType {
 
 enum ElectionStatus {
   UPCOMING
-  ACTIVE
+  /// Polling is open today.
+  LIVE
   COUNTING
   COMPLETED
+  /// Superseded or withdrawn from the current view but kept for traceability.
+  ARCHIVED
+  /// Deprecated, retained so existing rows and Postgres enum ordering stay
+  /// valid. ACTIVE is the old name for LIVE; CANCELLED asserts an election was
+  /// called off, which is a stronger claim than ARCHIVED and is rarely what we
+  /// mean. New code should not write either.
+  ACTIVE
   CANCELLED
+}
+
+/// How far a fact has been checked. Distinct from VerificationStatus, which is
+/// the editorial workflow state of a candidate record; this is the strength of
+/// the evidence behind a data point and drives the public trust badge.
+enum VerificationTier {
+  /// Confirmed against the authority's own published record (ECN and similar).
+  OFFICIAL
+  /// Cross-checked by NetaTrack against a published secondary source.
+  NETATRACK
+  /// Not yet checked.
+  UNVERIFIED
+  /// Checked and found to conflict with the cited source.
+  DISPUTED
+}
+
+/// What kind of body published a source, so a reader can weigh it.
+enum SourceType {
+  ELECTION_COMMISSION
+  GOVERNMENT
+  COURT
+  NEWS_MEDIA
+  PARTY_OFFICIAL
+  ACADEMIC
+  ENCYCLOPEDIA
+  LEGACY_IMPORT
+  OTHER
 }
 
 /// Tier of a constituency or candidacy. Nepal runs federal and provincial
@@ -291,9 +326,9 @@ model VerificationToken {
 // ------------------- Geography, parties and candidates ----------------------
 
 model Party {
-  id          String  @id @default(uuid())
-  slug        String  @unique
-  name        String  @unique
+  id          String           @id @default(uuid())
+  slug        String           @unique
+  name        String           @unique
   shortName   String?
   symbolUrl   String?
   colorHex    String?
@@ -301,6 +336,10 @@ model Party {
   ideology    String?
   website     String?
   description String?
+  sourceName  String?
+  sourceUrl   String?
+  sourceType  SourceType?
+  tier        VerificationTier @default(UNVERIFIED)
 
   candidates  Candidate[]
   candidacies Candidacy[]
@@ -318,7 +357,7 @@ model Constituency {
   registeredVoters Int?
   majorIssues      String?
 
-  level               GovernmentLevel @default(FEDERAL)
+  level               GovernmentLevel  @default(FEDERAL)
   /// Set only for level = LOCAL: which of the four local body classes this is.
   localBodyType       LocalBodyType?
   /// Devanagari name as published, so the Nepali UI is not a transliteration.
@@ -328,6 +367,8 @@ model Constituency {
   /// Provenance, same contract as elections: a row states where it came from.
   sourceName          String?
   sourceUrl           String?
+  sourceType          SourceType?
+  tier                VerificationTier @default(UNVERIFIED)
   /// Constituency number within its district, e.g. the 1 in Kathmandu-1.
   number              Int?
   wards               Int?
@@ -386,6 +427,7 @@ model Candidate {
   gender             String?
   socialLinks        Json?
   verificationStatus VerificationStatus @default(PENDING)
+  tier               VerificationTier   @default(UNVERIFIED)
   verifiedAt         DateTime?
   isIncumbent        Boolean            @default(false)
   /// Standing without a party affiliation.
@@ -419,6 +461,11 @@ model Candidate {
   promises    Promise[]
   performance PerformanceRecord[]
   factChecks  FactCheck[]
+  /// News mentioning this politician. Many-to-many because one article
+  /// routinely covers several figures, and a politician accumulates coverage
+  /// across many articles. Editors attach the link; nothing is inferred by
+  /// matching names in body text, which would attribute stories wrongly.
+  newsArticles NewsArticle[] @relation("CandidateNews")
 
   @@index([partyId])
   @@index([constituencyId])
@@ -474,33 +521,76 @@ model CandidateClaim {
   @@index([candidateId])
 }
 
+/// A citation attached to any record.
+///
+/// Polymorphic on purpose: elections, results, parties and constituencies all
+/// need the same "where did this come from" evidence, and giving each its own
+/// join table would be four near-identical models. Candidates keep the older
+/// `CandidateSource` table, which already holds 275 live rows and is rendered
+/// on the public profile; consolidating the two is worth doing later but is
+/// not worth breaking a working page for now.
+model DataSource {
+  id         String           @id @default(uuid())
+  entityType String
+  entityId   String
+  /// Which field this citation supports, where it is narrower than the record.
+  field      String?
+  sourceName String
+  sourceUrl  String?
+  sourceType SourceType       @default(OTHER)
+  tier       VerificationTier @default(UNVERIFIED)
+  /// When a human last checked the record against this source.
+  verifiedAt DateTime?
+  note       String?
+  createdAt  DateTime         @default(now())
+
+  @@index([entityType, entityId])
+  @@index([sourceType])
+}
+
 // ---------------------- Elections, candidacy and results --------------------
 
 model Election {
-  id           String          @id @default(uuid())
-  slug         String          @unique
-  name         String
-  type         ElectionType
+  id                String          @id @default(uuid())
+  slug              String          @unique
+  name              String
+  type              ElectionType
   /// Gregorian year.
-  year         Int
+  year              Int
   /// Bikram Sambat year, which is how Nepali election cycles are named.
-  bsYear       Int?
-  level        GovernmentLevel @default(FEDERAL)
-  status       ElectionStatus  @default(UPCOMING)
-  electionDate DateTime?
-  description  String?
-  totalSeats   Int?
+  bsYear            Int?
+  level             GovernmentLevel @default(FEDERAL)
+  status            ElectionStatus  @default(UPCOMING)
+  /// Polling day. Null until a date is published — never inferred from a
+  /// Bikram Sambat string.
+  electionDate      DateTime?
+  /// Milestones, each null unless the authority has published it.
+  nominationStartAt DateTime?
+  nominationEndAt   DateTime?
+  countingStartAt   DateTime?
+  resultDeclaredAt  DateTime?
+  description       String?
+  totalSeats        Int?
+
+  /// Figures as published by the authority. Kept separate from what our own
+  /// tables happen to contain, so the two can be shown side by side and a gap
+  /// is visible rather than hidden.
+  officialConstituencies Int?
+  officialCandidates     Int?
+  officialVoters         Int?
   /// Seats filled by first-past-the-post, where the authority publishes the split.
-  fptpSeats    Int?
+  fptpSeats              Int?
   /// Seats filled by proportional representation.
-  prSeats      Int?
+  prSeats                Int?
 
   /// Provenance. A record is surfaced as *current* only when it is VERIFIED and
   /// carries a source; otherwise it is shown as unverified or historical, never
   /// as live fact.
   sourceName   String?
   sourceUrl    String?
+  sourceType   SourceType?
   verification VerificationStatus @default(PENDING)
+  tier         VerificationTier   @default(UNVERIFIED)
   /// When this record was last checked against the cited source.
   verifiedAt   DateTime?
   verifiedNote String?
@@ -514,6 +604,7 @@ model Election {
   manifestos  Manifesto[]
 
   @@index([status, year])
+  @@index([tier, electionDate])
 }
 
 /// Election calendar entries (nomination opens, campaign silence, polling day…).
@@ -574,8 +665,10 @@ model Result {
   totalVotesCast Int?
   turnoutPct     Float?
   status         VerificationStatus @default(PENDING)
+  tier           VerificationTier   @default(UNVERIFIED)
   sourceName     String?
   sourceUrl      String?
+  sourceType     SourceType?
   publishedAt    DateTime?
   updatedAt      DateTime           @updatedAt
 
@@ -897,6 +990,7 @@ model NewsArticle {
 
   revisions  NewsRevision[]
   factChecks FactCheck[]
+  candidates Candidate[]    @relation("CandidateNews")
 
   @@index([status, publishedAt])
 }
