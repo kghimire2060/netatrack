@@ -114,11 +114,24 @@ export function TrustBar({
         </span>
       ) : null}
 
-      {candidatesPending > 0 ? (
+      {candidatesVerified + candidatesPending > 0 ? (
         <span className="trust-item">
-          <Link className="source-line" href="/candidates">
-            {t("trust.pendingReview")}: {candidatesPending.toLocaleString("en-US")}
-            {candidatesVerified > 0 ? ` / ${(candidatesVerified + candidatesPending).toLocaleString("en-US")}` : ""}
+          <Link
+            className="source-line"
+            href="/candidates"
+            title={candidatesPending === 0 ? t("trust.corroboratedNote") : undefined}
+          >
+            {candidatesPending > 0 ? (
+              <>
+                {t("trust.pendingReview")}: {candidatesPending.toLocaleString("en-US")} /{" "}
+                {(candidatesVerified + candidatesPending).toLocaleString("en-US")}
+              </>
+            ) : (
+              <>
+                {candidatesVerified.toLocaleString("en-US")} / {candidatesVerified.toLocaleString("en-US")}{" "}
+                {t("trust.corroborated")}
+              </>
+            )}
           </Link>
         </span>
       ) : null}

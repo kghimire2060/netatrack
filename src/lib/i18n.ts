@@ -459,6 +459,9 @@ const en = {
   "trust.checked": "checked",
   "trust.lastUpdated": "Last updated",
   "trust.pendingReview": "Candidate records pending verification",
+  "trust.corroborated": "candidate records corroborated",
+  "trust.corroboratedNote":
+    "Name, constituency and party checked against a published member list for the 2026 general election. Secondary source — not yet confirmed against the Election Commission's own record.",
   "trust.noVerifiedElection": "No verified current election on record",
   "trust.latestElection": "Most recent verified election",
   "trust.pollingDay": "Polling day",
@@ -891,6 +894,9 @@ const ne: Partial<Record<TranslationKey, string>> = {
   "trust.checked": "जाँचिएको",
   "trust.lastUpdated": "पछिल्लो अद्यावधिक",
   "trust.pendingReview": "प्रमाणीकरण बाँकी उम्मेदवार विवरण",
+  "trust.corroborated": "उम्मेदवार विवरण भिडाइएको",
+  "trust.corroboratedNote":
+    "नाम, निर्वाचन क्षेत्र र दल २०२६ को आम निर्वाचनको प्रकाशित सदस्य सूचीसँग भिडाइएको। द्वितीयक स्रोत — निर्वाचन आयोगको आफ्नै अभिलेखसँग अझै पुष्टि भएको छैन।",
   "trust.noVerifiedElection": "हालको प्रमाणित निर्वाचन अभिलेख छैन",
   "trust.latestElection": "पछिल्लो प्रमाणित निर्वाचन",
   "trust.pollingDay": "मतदान दिन",
