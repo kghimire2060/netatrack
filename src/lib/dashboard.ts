@@ -83,6 +83,12 @@ export type RadarItem = {
   href: string;
   at: Date;
   tone: "info" | "good" | "warn" | "bad" | "purple" | "muted";
+  /**
+   * A feed headed "what moved recently" must not present a fifteen-month-old
+   * article as current. Anything past the window, or with no usable date, is
+   * labelled historical instead of being silently mixed in.
+   */
+  age: "recent" | "historical";
 };
 
 /** Party colours are assigned by a stable index so a filter never repaints them. */
@@ -445,7 +451,7 @@ async function getRadar(): Promise<RadarItem[]> {
     }),
   ]);
 
-  const items: RadarItem[] = [
+  const items: Omit<RadarItem, "age">[] = [
     ...news.map((n) => ({
       id: `news-${n.id}`,
       kind: "news" as const,
@@ -493,5 +499,14 @@ async function getRadar(): Promise<RadarItem[]> {
     })),
   ];
 
-  return items.sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, 10);
+  const RECENT_WINDOW_DAYS = 90;
+  const cutoff = Date.now() - RECENT_WINDOW_DAYS * 86_400_000;
+
+  return items
+    .map((item) => ({
+      ...item,
+      age: (item.at.getTime() > cutoff ? "recent" : "historical") as RadarItem["age"],
+    }))
+    .sort((a, b) => b.at.getTime() - a.at.getTime())
+    .slice(0, 10);
 }

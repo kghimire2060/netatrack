@@ -978,3 +978,9 @@ html[lang="ne"] .radar-kind { text-transform: none; letter-spacing: 0; font-size
   padding: .55rem .85rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   font-size: .8rem; color: var(--ink-muted);
 }
+
+.radar-historical {
+  margin-inline-start: .45rem; padding: .05rem .38rem; border-radius: 4px;
+  background: var(--surface-sunken); color: var(--ink-faint);
+  font-size: .64rem; font-weight: 800; letter-spacing: .04em; white-space: nowrap;
+}

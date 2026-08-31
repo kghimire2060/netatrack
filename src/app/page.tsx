@@ -278,10 +278,15 @@ export default async function HomePage() {
               {d.radar.map((item) => (
                 <Link key={item.id} href={item.href} className={`radar-row tone-${item.tone}`}>
                   <span className="radar-kind">{t(`radar.${item.kind}` as TranslationKey)}</span>
-                  <span className="radar-title">{item.title}</span>
+                  <span className="radar-title">
+                    {item.title}
+                    {item.age === "historical" ? (
+                      <span className="radar-historical">{t("trust.historical")}</span>
+                    ) : null}
+                  </span>
                   <span className="radar-meta faint">
                     {item.meta ? `${item.meta} · ` : ""}
-                    {item.at.getTime() > 0 ? relativeTime(item.at) : ""}
+                    {item.at.getTime() > 0 ? formatDate(item.at) : ""}
                   </span>
                 </Link>
               ))}
