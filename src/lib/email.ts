@@ -93,8 +93,24 @@ export async function deliver(
   const transport = await getTransport();
 
   if (!transport) {
-    // Development: no SMTP host configured. Log instead of sending, and mark
-    // the row SENT so lifecycle flows can be exercised end to end locally.
+    // No SMTP host configured.
+    //
+    // In development, log the message and mark it SENT so lifecycle flows can
+    // be exercised end to end without a mail server.
+    //
+    // In production the same shortcut would be a lie: the row would read SENT
+    // while nobody received anything, the queue would look healthy, and the
+    // message would never be retried once SMTP was finally configured. So a
+    // production row is left QUEUED with the reason recorded, and the worker
+    // picks it up as soon as credentials exist.
+    if (process.env.NODE_ENV === "production") {
+      await prisma.notification.update({
+        where: { id: notificationId },
+        data: { status: "QUEUED", error: "SMTP not configured — awaiting delivery" },
+      });
+      return { delivered: false, dev: false };
+    }
+
     if (process.env.NODE_ENV !== "test") {
       console.log(
         `\n[email:dev] to=${mail.to}\n  subject: ${mail.subject}\n  ${mail.text.replace(/\n/g, "\n  ")}\n`
