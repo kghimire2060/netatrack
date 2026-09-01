@@ -16,7 +16,7 @@
     "db:reset": "prisma migrate reset --force",
     "mailer": "tsx scripts/mail-worker.ts",
     "mail:test": "tsx scripts/mail-test.ts",
-    "build:standalone": "BUILD_STANDALONE=true prisma generate && BUILD_STANDALONE=true next build",
+    "build:standalone": "BUILD_STANDALONE=true NODE_OPTIONS=--max-old-space-size=1536 prisma generate && BUILD_STANDALONE=true NODE_OPTIONS=--max-old-space-size=1536 next build",
     "cpanel:prepare": "cp -r public .next/standalone/ 2>/dev/null; mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/ && rm -f .next/standalone/.env .next/standalone/.env.* && echo \"standalone ready (local .env removed)\""
   },
   "prisma": {

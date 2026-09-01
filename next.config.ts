@@ -51,7 +51,18 @@ const nextConfig: NextConfig = {
    * build path — setting it unconditionally changes how both hosts package the
    * app, and only one of them needs it.
    */
-  ...(process.env.BUILD_STANDALONE === "true" ? { output: "standalone" as const } : {}),
+  ...(process.env.BUILD_STANDALONE === "true"
+    ? {
+        output: "standalone" as const,
+        /**
+         * Shared hosting caps how many processes an account may hold open, and
+         * the build's parallel workers trip it: the compile dies with
+         * `spawn node EAGAIN` (errno -11), which reads like a missing binary
+         * but is really the process limit. One worker is slower and completes.
+         */
+        experimental: { cpus: 1, workerThreads: false },
+      }
+    : {}),
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

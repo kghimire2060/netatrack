@@ -34,3 +34,4 @@ Thumbs.db
 
 # keep the template tracked
 !.env.example
+env-for-server.txt
