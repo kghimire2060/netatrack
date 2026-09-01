@@ -45,6 +45,13 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  /**
+   * cPanel/Passenger needs a self-contained server bundle it can start from a
+   * single file. Gated behind an env var so Vercel keeps its own optimised
+   * build path — setting it unconditionally changes how both hosts package the
+   * app, and only one of them needs it.
+   */
+  ...(process.env.BUILD_STANDALONE === "true" ? { output: "standalone" as const } : {}),
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
