@@ -66,6 +66,35 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
+      /**
+       * Public reference pages are identical for every reader of the same URL,
+       * so they belong in the CDN. Without this Next sends `no-store` for any
+       * page that reads searchParams, and every request from Kathmandu crosses
+       * to us-east-1 to re-render byte-identical HTML — the election dashboard
+       * was measuring 5-60s that way.
+       *
+       * stale-while-revalidate keeps the edge serving instantly while one
+       * request refreshes behind it, which is the behaviour a counting night
+       * needs: never a queue, never older than a minute.
+       */
+      {
+        source: "/elections/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+      {
+        source: "/constituency/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=300, stale-while-revalidate=3600",
+          },
+        ],
+      },
       // Nothing under /api should ever be cached by a shared proxy: these
       // responses are per-session and some are permission-dependent.
       {
