@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui";
 import { VerifiedBadge } from "@/components/dashboard/trust";
 import type { ElectionEntry } from "@/lib/candidates";
-import { formatCount, formatPct, type Locale, type Translator } from "@/lib/i18n";
+import { enumLabel, formatCount, formatPct, formatYear, type Locale, type Translator } from "@/lib/i18n";
 import { NotRecorded } from "./unavailable";
 
 /**
@@ -42,13 +42,31 @@ export function ElectionTimeline({
 
             <p className="etimeline-meta">
               {e.constituencyName ? (
-                <Link href={`/constituency/${e.constituencySlug}`}>{e.constituencyName}</Link>
+                <Link href={`/constituency/${e.constituencySlug}`}>
+                  {locale === "ne" && e.constituencyNameNe ? e.constituencyNameNe : e.constituencyName}
+                </Link>
               ) : (
                 <NotRecorded t={t} />
               )}
+              {/* The post is what the Commission actually reports a local
+                  result under, so it sits with the seat rather than buried in
+                  the figures below. */}
+              {e.post ? <> · {enumLabel(e.post, locale)}</> : null}
+              {e.wardNumber !== null ? (
+                <> · {t("cand.ward")} {formatCount(e.wardNumber, locale)}</>
+              ) : null}
               {e.partyName ? <> · {e.partyName}</> : null}
-              {e.bsYear ? <> · {t("cand.bs")} {formatCount(e.bsYear, locale)}</> : null}
+              {e.bsYear ? <> · {t("cand.bs")} {formatYear(e.bsYear, locale)}</> : null}
+              {e.symbol ? <> · {t("cand.symbol")}: {e.symbol}</> : null}
+              {/* Age as published for THIS election — not presented as the
+                  age today, which the source does not state. */}
+              {e.ageAtElection !== null ? (
+                // Already inside one election's entry, so the year is
+                // implied and the label is just "Age".
+                <> · {t("cand.age")} {formatCount(e.ageAtElection, locale)}</>
+              ) : null}
             </p>
+            {e.remark ? <p className="small faint etimeline-remark">{t("cand.remark")}: {e.remark}</p> : null}
 
             <dl className="etimeline-figures">
               <div>

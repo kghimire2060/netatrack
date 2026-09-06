@@ -9,7 +9,7 @@ import { Unavailable, NotRecorded } from "@/components/candidate/unavailable";
 import { ContestHistory } from "@/components/constituency/contest-history";
 import { TrendChart } from "@/components/constituency/trend-chart";
 import { getTranslator } from "@/lib/locale-server";
-import { formatCount, formatPct, enumLabel } from "@/lib/i18n";
+import { formatCount, formatYear, formatPct, enumLabel } from "@/lib/i18n";
 import { formatDate, formatDateTime, relativeTime } from "@/lib/format";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -385,7 +385,7 @@ export default async function ConstituencyPage({ params }: { params: Promise<{ s
                 {c.historicalResults.map((h) => (
                   <li key={h.id} className="is-muted">
                     <div className="when">
-                      {t("cand.bs")} {formatCount(h.bsYear, locale)}
+                      {t("cand.bs")} {formatYear(h.bsYear, locale)}
                     </div>
                     <div className="what">{h.winnerName}</div>
                     <div className="small muted">

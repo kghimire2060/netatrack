@@ -68,6 +68,9 @@ export const PERMISSIONS = {
   "promise.view": "View manifesto promises",
   "promise.manage": "Create and update promise records",
   "performance.manage": "Maintain representative performance records",
+  "project.manage": "Create and update constituency project records",
+  "statement.manage": "Record and publish politician statements",
+  "media.manage": "Upload and publish evidence photographs",
 
   // analytics and research
   "analytics.view": "View operational and civic dashboards",
@@ -135,6 +138,9 @@ const STAFF: Permission[] = [
   "factcheck.review",
   "promise.view",
   "promise.manage",
+  "project.manage",
+  "statement.manage",
+  "media.manage",
   "analytics.view",
   "poll.vote",
   "complaint.create",

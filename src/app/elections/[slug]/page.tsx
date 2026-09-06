@@ -17,7 +17,7 @@ import { ProvinceMap } from "@/components/election/province-map";
 import { Explorer, ExplorerFilters } from "@/components/election/explorer";
 import { Unavailable, NotRecorded } from "@/components/candidate/unavailable";
 import { getTranslator } from "@/lib/locale-server";
-import { formatCount, formatPct, enumLabel } from "@/lib/i18n";
+import { formatCount, formatYear, formatPct, enumLabel } from "@/lib/i18n";
 import { formatDate, formatDateTime } from "@/lib/format";
 
 /**
@@ -98,8 +98,8 @@ export default async function ElectionDashboard({ params, searchParams }: Params
               <VerifiedBadge tier={election.tier} t={t} />
             </div>
             <p className="ed-sub">
-              {enumLabel(election.type, locale)} · {formatCount(election.year, locale)}
-              {election.bsYear ? ` · ${t("cand.bs")} ${formatCount(election.bsYear, locale)}` : ""}
+              {enumLabel(election.type, locale)} · {formatYear(election.year, locale)}
+              {election.bsYear ? ` · ${t("cand.bs")} ${formatYear(election.bsYear, locale)}` : ""}
             </p>
           </div>
 

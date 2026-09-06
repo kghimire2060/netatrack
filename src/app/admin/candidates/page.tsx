@@ -5,7 +5,7 @@ import { requireActorPage } from "@/lib/page-guards";
 import { can } from "@/lib/rbac";
 import { Card, EmptyState, Pager, Stat } from "@/components/ui";
 import { VerificationBadge } from "@/components/status";
-import { CandidateVerifyForm } from "@/components/admin-forms";
+import { CandidateDetailsForm, CandidateVerifyForm } from "@/components/admin-forms";
 import { formatDate } from "@/lib/format";
 import type { Prisma, VerificationStatus } from "@prisma/client";
 import { getTranslator } from "@/lib/locale-server";
@@ -46,7 +46,12 @@ export default async function AdminCandidatesPage({
         party: { select: { shortName: true, name: true } },
         constituency: { select: { name: true, district: true } },
         account: { select: { fullName: true } },
-        _count: { select: { ratings: true, sources: true, promises: true } },
+        _count: {
+          select: {
+            ratings: true, sources: true, promises: true,
+            projects: true, statements: true, media: true,
+          },
+        },
       },
     }),
     prisma.candidate.groupBy({ by: ["verificationStatus"], _count: { _all: true } }),
@@ -117,10 +122,28 @@ export default async function AdminCandidatesPage({
                   </div>
                   <div className="small faint">
                     {candidate._count.sources} sources · {candidate._count.ratings} ratings ·{" "}
-                    {candidate._count.promises} promises · added {formatDate(candidate.createdAt)}
+                    {candidate._count.promises} promises · {candidate._count.projects} projects ·{" "}
+                    {candidate._count.statements} statements · {candidate._count.media} photos ·
+                    added {formatDate(candidate.createdAt)}
                   </div>
                 </div>
               </div>
+              {/* Editorial identity fields. A claimed candidate account can
+                  edit its own biography via the candidate portal but never
+                  these, which are sourced from the Election Commission record. */}
+              <hr className="divider" />
+              <CandidateDetailsForm
+                candidateId={candidate.id}
+                fullNameNe={candidate.fullNameNe}
+                dateOfBirth={
+                  candidate.dateOfBirth
+                    ? candidate.dateOfBirth.toISOString().slice(0, 10)
+                    : null
+                }
+                office={candidate.office}
+                photoUrl={candidate.photoUrl}
+              />
+
               {canVerify ? (
                 <>
                   <hr className="divider" />

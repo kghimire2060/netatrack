@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComplaintStatus, ContentStatus, FactCheckVerdict, PromiseStatus, VerificationStatus, ElectionStatus, ClaimStatus, AccountStatus, IssueStatus, GovernmentLevel } from "@prisma/client";
+import type { ComplaintStatus, ContentStatus, FactCheckVerdict, PromiseStatus, ProjectStatus, StatementContext, MediaKind, VerificationStatus, ElectionStatus, ClaimStatus, AccountStatus, IssueStatus, GovernmentLevel } from "@prisma/client";
 import { Badge, type Tone } from "./ui";
 import { enumLabel } from "@/lib/i18n";
 import { useLocale } from "./locale-provider";
@@ -129,6 +129,54 @@ export const IssueBadge = ({ status }: { status: IssueStatus }) => {
 export const LevelBadge = ({ level }: { level: GovernmentLevel }) => {
   const { locale } = useLocale();
   return <Badge tone={LEVEL_TONE[level]}>{enumLabel(level, locale)}</Badge>;
+};
+
+/**
+ * Project tones intentionally differ from promise tones. STALLED is "bad", not
+ * "muted": money was released against work that then stopped, which is a
+ * worse public outcome than a project that was never approved.
+ */
+const PROJECT_TONE: Record<ProjectStatus, Tone> = {
+  PROPOSED: "muted",
+  APPROVED: "info",
+  IN_PROGRESS: "warn",
+  COMPLETED: "good",
+  STALLED: "bad",
+  CANCELLED: "muted",
+  UNABLE_TO_VERIFY: "purple",
+};
+
+const CONTEXT_TONE: Record<StatementContext, Tone> = {
+  PARLIAMENT: "navy",
+  PRESS_CONFERENCE: "info",
+  INTERVIEW: "info",
+  SOCIAL_MEDIA: "muted",
+  CAMPAIGN_RALLY: "warn",
+  PARTY_EVENT: "purple",
+  OFFICIAL_DOCUMENT: "navy",
+  OTHER: "muted",
+};
+
+const MEDIA_TONE: Record<MediaKind, Tone> = {
+  PROJECT_EVIDENCE: "good",
+  CONSTITUENCY_VISIT: "info",
+  PARLIAMENT: "navy",
+  PUBLIC_EVENT: "purple",
+  DOCUMENT_SCAN: "muted",
+  OTHER: "muted",
+};
+
+export const ProjectBadge = ({ status }: { status: ProjectStatus }) => {
+  const { locale } = useLocale();
+  return <Badge tone={PROJECT_TONE[status]}>{enumLabel(status, locale)}</Badge>;
+};
+export const StatementContextBadge = ({ context }: { context: StatementContext }) => {
+  const { locale } = useLocale();
+  return <Badge tone={CONTEXT_TONE[context]}>{enumLabel(context, locale)}</Badge>;
+};
+export const MediaKindBadge = ({ kind }: { kind: MediaKind }) => {
+  const { locale } = useLocale();
+  return <Badge tone={MEDIA_TONE[kind]}>{enumLabel(kind, locale)}</Badge>;
 };
 
 export { COMPLAINT_TONE };

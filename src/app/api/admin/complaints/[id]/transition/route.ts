@@ -82,6 +82,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       data.internalNotes = { set: input.internalNote };
     }
     if (input.assignedToId) data.assignedTo = { connect: { id: input.assignedToId } };
+    // Routing to a representative publishes the issue on a named person's
+    // profile, so it is only ever set by this explicit field, and clearing it
+    // (null) must actually disconnect rather than be ignored as "unchanged".
+    if (input.representativeId !== undefined) {
+      data.representative = input.representativeId
+        ? { connect: { id: input.representativeId } }
+        : { disconnect: true };
+    }
     if (input.status === "VERIFIED") {
       data.verifiedBy = { connect: { id: actor.userId } };
       data.verifiedAt = now;

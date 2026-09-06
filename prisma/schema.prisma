@@ -137,6 +137,47 @@ enum LocalBodyType {
   RURAL_MUNICIPALITY
 }
 
+/// The post a candidacy contests.
+///
+/// Named from the Election Commission's own result tables
+/// (result.election.gov.np), which report local results per post rather than
+/// per local body. The distinction is not cosmetic: one municipality runs a
+/// mayoral contest and a separate contest in every ward on the same day, so
+/// without the post a "constituency" would pool hundreds of candidates who
+/// never stood against each other.
+///
+/// Municipality-class bodies (metropolitan, sub-metropolitan, municipality)
+/// elect a MAYOR and DEPUTY_MAYOR; rural municipalities elect a CHAIRPERSON
+/// and VICE_CHAIRPERSON. They are the same office under different statutory
+/// names, and the ECN prints them differently, so they are kept distinct
+/// rather than collapsed into one "head of local body" value.
+enum ElectedPost {
+  /// मेयर — metropolitan, sub-metropolitan and municipality.
+  MAYOR
+  /// उपमेयर
+  DEPUTY_MAYOR
+  /// अध्यक्ष — rural municipality.
+  CHAIRPERSON
+  /// उपाध्यक्ष
+  VICE_CHAIRPERSON
+  /// वडा अध्यक्ष
+  WARD_CHAIRPERSON
+  /// वडा सदस्य — the two open ward member seats.
+  WARD_MEMBER
+  /// महिला सदस्य — reserved woman member.
+  WOMAN_MEMBER
+  /// दलित महिला सदस्य — reserved Dalit woman member.
+  DALIT_WOMAN_MEMBER
+  /// जिल्ला समन्वय समिति प्रमुख
+  DCC_CHIEF
+  DCC_DEPUTY_CHIEF
+  /// प्रतिनिधि सभा
+  HOUSE_OF_REPRESENTATIVES
+  /// प्रदेश सभा
+  PROVINCIAL_ASSEMBLY
+  OTHER
+}
+
 enum IssueStatus {
   RAISED
   ONGOING
@@ -177,6 +218,47 @@ enum PromiseStatus {
   DELAYED
   CANCELLED
   UNABLE_TO_VERIFY
+}
+
+/// Delivery state of a constituency project. Deliberately NOT PromiseStatus:
+/// a promise is a stated intention, a project is a funded work item, and they
+/// fail in different ways. "Stalled" (funded, started, then abandoned) has no
+/// promise equivalent, and "not started" means something quite different when
+/// a budget has already been released.
+enum ProjectStatus {
+  PROPOSED
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  /// Started, then abandoned or indefinitely halted.
+  STALLED
+  CANCELLED
+  /// Recorded, but the implementing body publishes nothing we can check.
+  UNABLE_TO_VERIFY
+}
+
+/// Where a statement was made. Weighing a quote requires knowing whether it
+/// was a floor speech under privilege or a line at a campaign rally.
+enum StatementContext {
+  PARLIAMENT
+  PRESS_CONFERENCE
+  INTERVIEW
+  SOCIAL_MEDIA
+  CAMPAIGN_RALLY
+  PARTY_EVENT
+  OFFICIAL_DOCUMENT
+  OTHER
+}
+
+/// What a photograph is evidence *of*. Drives which gallery it appears in and
+/// stops a campaign portrait being filed as project evidence.
+enum MediaKind {
+  PROJECT_EVIDENCE
+  CONSTITUENCY_VISIT
+  PARLIAMENT
+  PUBLIC_EVENT
+  DOCUMENT_SCAN
+  OTHER
 }
 
 enum PollStatus {
@@ -255,6 +337,7 @@ model User {
   factChecksReviewed FactCheck[]       @relation("FactCheckReviewer")
   factChecksEdited   FactCheck[]       @relation("FactCheckEditor")
   promiseUpdates     PromiseUpdate[]
+  projectUpdates     ProjectUpdate[]
   candidateSources   CandidateSource[]
 
   notifications Notification[]
@@ -396,6 +479,7 @@ model Constituency {
   results         Result[]
   complaints      Complaint[]
   promises        Promise[]
+  projects        Project[]
 
   @@unique([name, district])
   @@index([province, district])
@@ -420,6 +504,10 @@ model Candidate {
   id                 String             @id @default(uuid())
   slug               String             @unique
   fullName           String
+  /// Devanagari name as published by the Election Commission, so the Nepali UI
+  /// shows the name a Nepali reader actually recognises rather than a
+  /// transliteration of the Latin spelling. Same contract as Constituency.nameNe.
+  fullNameNe         String?
   photoUrl           String?
   biography          String?
   education          String?
@@ -455,21 +543,30 @@ model Candidate {
   accountId String? @unique
   account   User?   @relation("CandidateAccount", fields: [accountId], references: [id])
 
-  candidacies Candidacy[]
-  results     Result[]
-  ratings     Rating[]
-  claims      CandidateClaim[]
-  sources     CandidateSource[]
-  documents   CandidateDocument[]
-  manifestos  Manifesto[]
-  promises    Promise[]
-  performance PerformanceRecord[]
-  factChecks  FactCheck[]
+  candidacies  Candidacy[]
+  results      Result[]
+  ratings      Rating[]
+  claims       CandidateClaim[]
+  sources      CandidateSource[]
+  documents    CandidateDocument[]
+  manifestos   Manifesto[]
+  promises     Promise[]
+  performance  PerformanceRecord[]
+  factChecks   FactCheck[]
   /// News mentioning this politician. Many-to-many because one article
   /// routinely covers several figures, and a politician accumulates coverage
   /// across many articles. Editors attach the link; nothing is inferred by
   /// matching names in body text, which would attribute stories wrongly.
-  newsArticles NewsArticle[] @relation("CandidateNews")
+  newsArticles NewsArticle[]       @relation("CandidateNews")
+
+  projects   Project[]
+  statements Statement[]
+  media      MediaItem[]
+  /// Citizen issues an editor has routed to this representative. Never
+  /// inferred from the constituency: a seat holder is not automatically
+  /// answerable for every issue filed in their district, and asserting so on a
+  /// public profile would be an accusation we cannot source.
+  complaints Complaint[] @relation("ComplaintRepresentative")
 
   @@index([partyId])
   @@index([constituencyId])
@@ -644,11 +741,37 @@ model Candidacy {
   partyId          String?
   party            Party?           @relation(fields: [partyId], references: [id])
   symbol           String?
+  /// चुनाव चिन्ह artwork, where the authority publishes an image.
+  symbolUrl        String?
   nominationStatus NominationStatus @default(NOMINATED)
   nominatedAt      DateTime?
 
+  /// Which post this candidacy contests. Null for older records entered
+  /// before the field existed, and for levels where the election already
+  /// determines the post.
+  post       ElectedPost?
+  /// Ward number, for ward-level posts only. Part of the contest identity:
+  /// Ward 5 chair and Ward 6 chair are different races in the same body.
+  wardNumber Int?
+
+  /// Age in whole years as published by the Election Commission for this
+  /// election.
+  ///
+  /// Stored here rather than derived from `Candidate.dateOfBirth` because the
+  /// ECN publishes उमेर (age), not a birth date, and a birth date cannot be
+  /// recovered from an age — only guessed to within a year. Recording an
+  /// invented date of birth so the profile could display an age is exactly
+  /// the fabrication this platform exists to avoid. It lives on the candidacy
+  /// rather than the candidate because an age is only meaningful with the
+  /// date it was stated on.
+  ageAtElection Int?
+
+  /// The candidate is not required to be unique per post: a person may not
+  /// stand for two posts in the same body in the same election, so the
+  /// existing key still holds and is deliberately left unchanged.
   @@unique([electionId, candidateId, constituencyId])
   @@index([electionId, constituencyId])
+  @@index([electionId, constituencyId, post, wardNumber])
 }
 
 /// OFFICIAL results only. Public-opinion ratings live in `Rating` and must
@@ -666,6 +789,14 @@ model Result {
   votes          Int
   voteShare      Float?
   isWinner       Boolean            @default(false)
+  /// The contest this result belongs to, mirroring `Candidacy`. Rank and
+  /// winning margin are computed by grouping on these columns; without them a
+  /// local body's mayoral race and all of its ward races would be pooled into
+  /// one contest and produce a rank against candidates nobody stood against.
+  post           ElectedPost?
+  wardNumber     Int?
+  /// कैफियत — the authority's own remark on the row, e.g. "निर्वाचित".
+  remark         String?
   totalVotesCast Int?
   turnoutPct     Float?
   status         VerificationStatus @default(PENDING)
@@ -678,6 +809,7 @@ model Result {
 
   @@unique([electionId, constituencyId, candidateId])
   @@index([electionId, constituencyId])
+  @@index([electionId, constituencyId, post, wardNumber])
 }
 
 /// A tracked public issue for a constituency, distinct from a citizen-reported
@@ -829,6 +961,13 @@ model Complaint {
   assignedTo   User?   @relation("ComplaintAssignee", fields: [assignedToId], references: [id])
   department   String?
 
+  /// The elected representative an editor has routed this issue to, surfaced
+  /// on that politician's public profile. Optional and editor-set: most issues
+  /// concern a department, not a person, and auto-attaching every issue in a
+  /// district to its seat holder would publish an unsourced accusation.
+  representativeId String?
+  representative   Candidate? @relation("ComplaintRepresentative", fields: [representativeId], references: [id])
+
   verifiedById String?
   verifiedBy   User?     @relation("ComplaintVerifier", fields: [verifiedById], references: [id])
   verifiedAt   DateTime?
@@ -855,6 +994,7 @@ model Complaint {
   @@index([status, createdAt])
   @@index([assignedToId, status])
   @@index([category])
+  @@index([representativeId, status])
 }
 
 model ComplaintEvent {
@@ -931,7 +1071,9 @@ model Promise {
   constituencyId String?
   constituency   Constituency? @relation(fields: [constituencyId], references: [id])
 
-  updates PromiseUpdate[]
+  updates  PromiseUpdate[]
+  /// Work items delivering this promise, where the link is known.
+  projects Project[]
 
   @@index([status])
   @@index([candidateId])
@@ -949,6 +1091,164 @@ model PromiseUpdate {
   createdAt   DateTime      @default(now())
 
   @@index([promiseId, createdAt])
+}
+
+/// A funded work item in a constituency — a road, a bridge, a health post, a
+/// scholarship programme.
+///
+/// Separate from `Promise` on purpose. A promise is an intention a politician
+/// stated; a project is a work item with a budget line and an implementing
+/// body, and it exists whether or not anyone promised it. Collapsing the two
+/// would either credit a representative for routine government works they had
+/// no hand in, or hide works that were delivered without ever being promised.
+/// `promiseId` links the two where an editor can actually show the connection.
+model Project {
+  id          String        @id @default(uuid())
+  slug        String        @unique
+  title       String
+  titleNe     String?
+  description String?
+  /// Road, Irrigation, Health, Education… free text, because Nepal's budget
+  /// headings change between fiscal years and an enum would go stale.
+  sector      String?
+  status      ProjectStatus @default(PROPOSED)
+
+  /// Physical progress as published by the implementing body, 0–100. Null
+  /// unless a figure has actually been published — never derived from status,
+  /// which would turn a label into a fabricated percentage.
+  progressPct Float?
+  /// Allocation and expenditure in NPR. Decimal, not Float: these are money.
+  budgetNpr   Decimal? @db.Decimal(16, 2)
+  spentNpr    Decimal? @db.Decimal(16, 2)
+
+  startedAt   DateTime?
+  targetDate  DateTime?
+  completedAt DateTime?
+
+  /// Ward number within the local body, where the work is ward-specific.
+  wardNumber       Int?
+  locationDetail   String?
+  /// The agency actually executing the work, e.g. "Department of Roads".
+  implementingBody String?
+
+  constituencyId String
+  constituency   Constituency @relation(fields: [constituencyId], references: [id], onDelete: Cascade)
+  /// The representative credited with securing or delivering the work. Editor
+  /// -set and sourced; a project in a seat is not automatically its holder's.
+  candidateId    String?
+  candidate      Candidate?   @relation(fields: [candidateId], references: [id])
+  promiseId      String?
+  promise        Promise?     @relation(fields: [promiseId], references: [id])
+
+  sourceName String?
+  sourceUrl  String?
+  sourceType SourceType?
+  tier       VerificationTier @default(UNVERIFIED)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastUpdateAt DateTime @default(now())
+
+  updates ProjectUpdate[]
+  media   MediaItem[]
+
+  @@index([constituencyId, status])
+  @@index([candidateId, status])
+  @@index([status])
+}
+
+/// Dated progress trail for a project, mirroring `PromiseUpdate`: a status is
+/// never silently overwritten, so a project that quietly slipped from
+/// "in progress" to "stalled" leaves a visible record of when it did.
+model ProjectUpdate {
+  id          String        @id @default(uuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status      ProjectStatus
+  progressPct Float?
+  note        String?
+  evidenceUrl String?
+  actorId     String?
+  actor       User?         @relation(fields: [actorId], references: [id])
+  createdAt   DateTime      @default(now())
+
+  @@index([projectId, createdAt])
+}
+
+/// A recorded public statement, stored verbatim with where and when it was
+/// said.
+///
+/// Distinct from `FactCheck`: a FactCheck row asserts an editorial verdict,
+/// which is a far stronger claim than "this person said this". Most statements
+/// are never checked, and the ones that are keep both records — the quote and
+/// the verdict — so a reader can see the claim independently of our ruling.
+model Statement {
+  id          String    @id @default(uuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  /// Verbatim, in the language it was given in. Never paraphrased: a
+  /// paraphrase attributed as a quote is the exact failure this table avoids.
+  quote    String
+  /// Devanagari original where the statement was made in Nepali and the
+  /// primary record above is a translation.
+  quoteNe  String?
+  context  StatementContext @default(OTHER)
+  /// Where it was said, e.g. "House of Representatives, session 12".
+  venue    String?
+  statedAt DateTime?
+  topic    String?
+
+  sourceName String?
+  sourceUrl  String?
+  sourceType SourceType?
+  tier       VerificationTier @default(UNVERIFIED)
+  status     ContentStatus    @default(DRAFT)
+
+  /// Set only when an editor has checked this exact statement.
+  factCheckId String?
+  factCheck   FactCheck? @relation(fields: [factCheckId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([candidateId, statedAt])
+  @@index([status, statedAt])
+}
+
+/// Photographic and documentary evidence of projects and activity.
+///
+/// `capturedAt` is kept apart from `createdAt` deliberately: a photo uploaded
+/// today may show work done three years ago, and captioning it with its upload
+/// date would misdate the evidence. A photo with no known capture date is
+/// shown without one.
+model MediaItem {
+  id          String     @id @default(uuid())
+  candidateId String?
+  candidate   Candidate? @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  kind         MediaKind        @default(OTHER)
+  imageUrl     String
+  thumbnailUrl String?
+  caption      String?
+  captionNe    String?
+  /// Alternative text. Required in practice for anything published; nullable
+  /// only so legacy imports can land before an editor writes one.
+  altText      String?
+  capturedAt   DateTime?
+  /// Photographer or publishing outlet. Publishing an image with no credit is
+  /// treated as an editorial defect, not a default.
+  credit       String?
+  sourceUrl    String?
+  tier         VerificationTier @default(UNVERIFIED)
+  status       ContentStatus    @default(DRAFT)
+  position     Int              @default(0)
+  createdAt    DateTime         @default(now())
+
+  @@index([candidateId, status, position])
+  @@index([projectId, status, position])
 }
 
 /// Objective, source-backed activity records (section 12). Kept apart from
@@ -992,9 +1292,9 @@ model NewsArticle {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  revisions  NewsRevision[]
-  factChecks FactCheck[]
-  candidates Candidate[]    @relation("CandidateNews")
+  revisions      NewsRevision[]
+  factChecks     FactCheck[]
+  candidates     Candidate[]    @relation("CandidateNews")
   constituencies Constituency[] @relation("ConstituencyNews")
 
   @@index([status, publishedAt])
@@ -1044,7 +1344,9 @@ model FactCheck {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  evidence FactCheckEvidence[]
+  evidence   FactCheckEvidence[]
+  /// Statements this check adjudicates.
+  statements Statement[]
 
   @@index([status, publishedAt])
 }

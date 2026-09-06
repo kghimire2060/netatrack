@@ -59,6 +59,15 @@ export default async function AdminComplaintDetail({
     orderBy: { fullName: "asc" },
   });
 
+  // Routing publishes the issue on a named politician's public profile, so the
+  // list is scoped to sitting representatives rather than every candidate on
+  // file: a defeated candidate is not answerable for anything.
+  const representatives = await prisma.candidate.findMany({
+    where: { isIncumbent: true },
+    select: { id: true, fullName: true, constituency: { select: { name: true } } },
+    orderBy: { fullName: "asc" },
+  });
+
   return (
     <>
       <Breadcrumb
@@ -106,6 +115,11 @@ export default async function AdminComplaintDetail({
               staff={staff}
               assignedToId={complaint.assignedToId}
               department={complaint.department}
+              representatives={representatives.map((r) => ({
+                id: r.id,
+                label: r.constituency ? `${r.fullName} — ${r.constituency.name}` : r.fullName,
+              }))}
+              representativeId={complaint.representativeId}
             />
           </Card>
 

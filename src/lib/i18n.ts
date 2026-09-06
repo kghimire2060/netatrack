@@ -711,6 +711,108 @@ const en = {
   "ed.share.copy": "Copy link",
   "ed.share.title": "Share",
   "ed.noElection": "No election record found",
+  // ---- candidate profile: accountability score
+  "cand.accountabilityScore": "Accountability Score",
+  "cand.scoreUnavailable":
+    "Not enough official records to score yet. A score appears once promises, projects, parliamentary activity or fact-checks are on file.",
+  "cand.scorePromises": "Promises",
+  "cand.scoreProjects": "Projects",
+  "cand.scoreParliament": "Parliament",
+  "cand.scoreFactChecks": "Fact-checks",
+  "cand.scoreNotRecorded": "not recorded",
+  "cand.coverageFull": "Built on the full record",
+  "cand.coveragePartial": "Partial record — some components missing",
+  "cand.coverageProvisional": "Provisional — built on a small part of the record",
+  "cand.scoreOfficialOnly":
+    "Built from official, source-backed records only. Public ratings are shown separately and are never averaged into this score.",
+  "cand.scoreMethodology": "How this is calculated",
+
+  // ---- candidate profile: tabs
+  "cand.tabsLabel": "Profile sections",
+  "cand.tabOverview": "Overview",
+  "cand.tabPromises": "Promises",
+  "cand.tabProjects": "Projects",
+  "cand.tabParliament": "Parliament",
+  "cand.tabFacts": "Facts",
+  "cand.tabActivity": "Activity",
+
+  // ---- candidate profile: identity
+  "cand.nepaliName": "Name in Nepali",
+  "cand.dateOfBirth": "Date of birth",
+  "cand.age": "Age",
+  "cand.yearsOld": "years",
+  "cand.ageUnrecorded": "Date of birth not recorded",
+
+  // ---- candidate profile: constituency projects
+  "cand.projects": "Constituency projects",
+  "cand.projectsEmpty": "No project records yet",
+  "cand.projectsEmptyHint":
+    "Projects are added from published budget documents and implementing-agency records. Nothing has been recorded against this representative yet.",
+  "cand.prjTotal": "Projects tracked",
+  "cand.prjCompleted": "Completed",
+  "cand.prjInProgress": "In progress",
+  "cand.prjApproved": "Approved",
+  "cand.prjStalled": "Stalled",
+  "cand.prjProposed": "Proposed",
+  "cand.prjCancelled": "Cancelled",
+  "cand.prjUnknown": "Unverifiable",
+  "cand.prjCompletedShare": "completed",
+  "cand.prjBudget": "Allocated",
+  "cand.prjSpent": "Spent",
+  "cand.prjMoneyNote":
+    "Summed only across projects whose implementing body has published a figure. Projects without published amounts are excluded, not counted as zero.",
+  "cand.prjAcross": "across",
+  "cand.prjMoneyMismatch":
+    "The two totals cover different numbers of projects, so one divided by the other is not an execution rate.",
+  "cand.postLabel": "Post",
+  "cand.ward": "Ward",
+  "cand.symbol": "Election symbol",
+  "cand.remark": "Commission remark",
+  "cand.ageAtElection": "age at",
+  "cand.ageAtElectionNote":
+    "The Election Commission publishes age, not a date of birth, so this is the age recorded for that election rather than the age today.",
+  "cand.prjWard": "Ward",
+  "cand.prjProgress": "Physical progress",
+  "cand.prjNoProgress": "No progress figure has been published for this project.",
+  "cand.prjStarted": "Started",
+  "cand.prjTarget": "Target date",
+  "cand.prjCompletedOn": "Completed",
+  "cand.prjImplementer": "Implementing body",
+  "cand.prjDeliversPromise": "Delivers promise",
+  "cand.prjNoSource": "No source recorded",
+  "cand.nprPrefix": "NPR",
+  "cand.lakh": "lakh",
+  "cand.crore": "crore",
+
+  // ---- candidate profile: statements
+  "cand.statements": "Statements and claims",
+  "cand.statementsEmpty": "No statements recorded",
+  "cand.statementsEmptyHint":
+    "Statements are recorded verbatim from parliamentary records, press coverage and published material, with the source attached.",
+  "cand.stmtUndated": "Date not recorded",
+  "cand.stmtNoSource": "No source recorded",
+  "cand.stmtReadCheck": "Read the fact-check",
+  "cand.stmtNotChecked": "This statement has not been fact-checked.",
+
+  // ---- candidate profile: media evidence
+  "cand.mediaEvidence": "Evidence and photographs",
+  "cand.mediaEmpty": "No photographs recorded",
+  "cand.mediaEmptyHint":
+    "Photographs of projects, constituency visits and parliamentary activity appear here with their credit and capture date.",
+  "cand.mediaNoAlt": "Photograph with no description recorded",
+  "cand.mediaNoCredit": "Credit not recorded",
+  "cand.mediaUndated": "Date not recorded",
+
+  // ---- candidate profile: citizen complaints
+  "cand.complaints": "Citizen issues",
+  "cand.complaintsEmpty": "No issues routed to this representative",
+  "cand.complaintsEmptyHint":
+    "Citizen issues appear here only after an editor verifies them and files them with this representative. Most issues concern a department rather than a person.",
+  "cand.complaintsNote":
+    "Issues an editor has filed with this representative after verification. Listing an issue records that it was raised, not that this representative caused it, and unresolved issues are not counted against the Accountability Score.",
+  "cand.complaintFiled": "filed",
+  "cand.complaintResolved": "resolved",
+  "cand.complaintNoResponse": "No public response has been recorded yet.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -1313,6 +1415,109 @@ const ne: Partial<Record<TranslationKey, string>> = {
   "cand.factCheckNote": "तथ्य जाँच स्वतन्त्र सम्पादकीय अभिलेख हो। नेताले प्रतिक्रिया राख्न सक्छन् तर निष्कर्ष परिवर्तन गर्न सक्दैनन्।",
   "cand.claimBody": "पहिचान पुष्टिपछि नेताहरूले प्रोफाइल दाबी गरी अनुमति भएका विवरण सम्पादन गर्न सक्छन्। सम्पादकीय अभिलेख, प्रमाणीकरण निर्णय र तथ्य जाँच स्वतन्त्र रहन्छन्।",
   "cand.claimCta": "यो प्रोफाइल दाबी गर्नुहोस्",
+  // ---- उम्मेदवार प्रोफाइल: उत्तरदायित्व अंक
+  "cand.accountabilityScore": "उत्तरदायित्व अंक",
+  "cand.scoreUnavailable":
+    "अंक निकाल्न पर्याप्त आधिकारिक अभिलेख छैन। प्रतिबद्धता, आयोजना, संसदीय गतिविधि वा तथ्य जाँच अभिलेख भएपछि अंक देखिन्छ।",
+  "cand.scorePromises": "प्रतिबद्धता",
+  "cand.scoreProjects": "आयोजना",
+  "cand.scoreParliament": "संसद",
+  "cand.scoreFactChecks": "तथ्य जाँच",
+  "cand.scoreNotRecorded": "अभिलेख छैन",
+  "cand.coverageFull": "पूर्ण अभिलेखमा आधारित",
+  "cand.coveragePartial": "आंशिक अभिलेख — केही अंश उपलब्ध छैन",
+  "cand.coverageProvisional": "अस्थायी — अभिलेखको सानो अंशमा मात्र आधारित",
+  "cand.scoreOfficialOnly":
+    "स्रोत सहितको आधिकारिक अभिलेखबाट मात्र गणना गरिएको। सार्वजनिक मूल्याङ्कन छुट्टै देखाइन्छ र यो अंकमा कहिल्यै मिसाइँदैन।",
+  "cand.scoreMethodology": "यो कसरी गणना हुन्छ",
+
+  // ---- उम्मेदवार प्रोफाइल: ट्याब
+  "cand.tabsLabel": "प्रोफाइल खण्डहरू",
+  "cand.tabOverview": "सारांश",
+  "cand.tabPromises": "प्रतिबद्धता",
+  "cand.tabProjects": "आयोजना",
+  "cand.tabParliament": "संसद",
+  "cand.tabFacts": "तथ्य",
+  "cand.tabActivity": "गतिविधि",
+
+  // ---- उम्मेदवार प्रोफाइल: परिचय
+  "cand.nepaliName": "नेपाली नाम",
+  "cand.dateOfBirth": "जन्म मिति",
+  "cand.age": "उमेर",
+  "cand.yearsOld": "वर्ष",
+  "cand.ageUnrecorded": "जन्म मिति अभिलेख छैन",
+
+  // ---- उम्मेदवार प्रोफाइल: निर्वाचन क्षेत्रका आयोजना
+  "cand.projects": "निर्वाचन क्षेत्रका आयोजना",
+  "cand.projectsEmpty": "आयोजना अभिलेख छैन",
+  "cand.projectsEmptyHint":
+    "आयोजनाहरू प्रकाशित बजेट कागजात र कार्यान्वयन निकायका अभिलेखबाट थपिन्छन्। यी जनप्रतिनिधिको नाममा अहिलेसम्म कुनै अभिलेख छैन।",
+  "cand.prjTotal": "अनुगमन गरिएका आयोजना",
+  "cand.prjCompleted": "सम्पन्न",
+  "cand.prjInProgress": "प्रगतिमा",
+  "cand.prjApproved": "स्वीकृत",
+  "cand.prjStalled": "अवरुद्ध",
+  "cand.prjProposed": "प्रस्तावित",
+  "cand.prjCancelled": "रद्द",
+  "cand.prjUnknown": "पुष्टि हुन नसकेको",
+  "cand.prjCompletedShare": "सम्पन्न",
+  "cand.prjBudget": "विनियोजित",
+  "cand.prjSpent": "खर्च",
+  "cand.prjMoneyNote":
+    "कार्यान्वयन निकायले रकम प्रकाशित गरेका आयोजनाको मात्र जोड। रकम प्रकाशित नभएका आयोजना शून्य नगनी बाहिर राखिएका छन्।",
+  "cand.prjAcross": "मध्ये",
+  "cand.prjMoneyMismatch":
+    "दुई जोड फरक-फरक संख्याका आयोजनाका हुन्, त्यसैले एउटालाई अर्कोले भाग गर्दा खर्च दर आउँदैन।",
+  "cand.postLabel": "पद",
+  "cand.ward": "वडा",
+  "cand.symbol": "चुनाव चिन्ह",
+  "cand.remark": "कैफियत",
+  "cand.ageAtElection": "उमेरः",
+  "cand.ageAtElectionNote":
+    "निर्वाचन आयोगले जन्म मिति होइन, उमेर प्रकाशित गर्छ। त्यसैले यो त्यही निर्वाचनका बेलाको उमेर हो, आजको होइन।",
+  "cand.prjWard": "वडा",
+  "cand.prjProgress": "भौतिक प्रगति",
+  "cand.prjNoProgress": "यस आयोजनाको प्रगति प्रतिशत प्रकाशित भएको छैन।",
+  "cand.prjStarted": "सुरु",
+  "cand.prjTarget": "लक्ष्य मिति",
+  "cand.prjCompletedOn": "सम्पन्न मिति",
+  "cand.prjImplementer": "कार्यान्वयन निकाय",
+  "cand.prjDeliversPromise": "पूरा गर्ने प्रतिबद्धता",
+  "cand.prjNoSource": "स्रोत अभिलेख छैन",
+  "cand.nprPrefix": "रु.",
+  "cand.lakh": "लाख",
+  "cand.crore": "करोड",
+
+  // ---- उम्मेदवार प्रोफाइल: अभिव्यक्ति
+  "cand.statements": "अभिव्यक्ति र दाबी",
+  "cand.statementsEmpty": "अभिव्यक्ति अभिलेख छैन",
+  "cand.statementsEmptyHint":
+    "अभिव्यक्तिहरू संसदीय अभिलेख, समाचार र प्रकाशित सामग्रीबाट हुबहु, स्रोत सहित राखिन्छन्।",
+  "cand.stmtUndated": "मिति अभिलेख छैन",
+  "cand.stmtNoSource": "स्रोत अभिलेख छैन",
+  "cand.stmtReadCheck": "तथ्य जाँच हेर्नुहोस्",
+  "cand.stmtNotChecked": "यो अभिव्यक्तिको तथ्य जाँच भएको छैन।",
+
+  // ---- उम्मेदवार प्रोफाइल: प्रमाण र तस्बिर
+  "cand.mediaEvidence": "प्रमाण र तस्बिर",
+  "cand.mediaEmpty": "तस्बिर अभिलेख छैन",
+  "cand.mediaEmptyHint":
+    "आयोजना, क्षेत्र भ्रमण र संसदीय गतिविधिका तस्बिरहरू स्रोत र खिचिएको मिति सहित यहाँ देखिन्छन्।",
+  "cand.mediaNoAlt": "विवरण अभिलेख नभएको तस्बिर",
+  "cand.mediaNoCredit": "स्रोत अभिलेख छैन",
+  "cand.mediaUndated": "मिति अभिलेख छैन",
+
+  // ---- उम्मेदवार प्रोफाइल: नागरिक गुनासो
+  "cand.complaints": "नागरिक विषय",
+  "cand.complaintsEmpty": "यी जनप्रतिनिधिसँग कुनै विषय दर्ता छैन",
+  "cand.complaintsEmptyHint":
+    "सम्पादकले प्रमाणित गरी यी जनप्रतिनिधिसँग दर्ता गरेपछि मात्र नागरिक विषय यहाँ देखिन्छ। धेरैजसो विषय व्यक्ति होइन, निकायसँग सम्बन्धित हुन्छन्।",
+  "cand.complaintsNote":
+    "प्रमाणीकरणपछि सम्पादकले यी जनप्रतिनिधिसँग दर्ता गरेका विषय। विषय सूचीबद्ध हुनुले त्यो उठेको हो भन्ने जनाउँछ, यी जनप्रतिनिधिले गराएको भन्ने होइन; अनि नटुंगिएका विषय उत्तरदायित्व अंकमा गनिँदैनन्।",
+  "cand.complaintFiled": "दर्ता",
+  "cand.complaintResolved": "समाधान",
+  "cand.complaintNoResponse": "सार्वजनिक जवाफ अभिलेख भएको छैन।",
+
   "nav.methodology": "कार्यविधि",
 
   // ---- निर्वाचन ड्यासबोर्ड
@@ -1396,6 +1601,18 @@ export function localizeDigits(value: string, locale: Locale): string {
   return value.replace(/[0-9]/g, (d) => DEVANAGARI[Number(d)]);
 }
 
+/**
+ * A year, in the reader's numerals but WITHOUT thousands grouping.
+ *
+ * `formatCount` groups digits, which is right for vote totals and wrong for
+ * years — it renders Bikram Sambat 2079 as "2,079", which reads as a quantity
+ * rather than a date.
+ */
+export function formatYear(value: number | null | undefined, locale: Locale): string {
+  if (value === null || value === undefined) return "—";
+  return localizeDigits(String(value), locale);
+}
+
 export function formatCount(value: number | null | undefined, locale: Locale): string {
   if (value === null || value === undefined) return "—";
   return localizeDigits(value.toLocaleString("en-US"), locale);
@@ -1453,6 +1670,42 @@ const ENUM_NE: Record<string, string> = {
   SUSPENDED: "निलम्बित",
   LOCKED: "बन्द गरिएको",
   DELETED: "हटाइएको",
+
+  // projects — PROPOSED/APPROVED/STALLED are project-only; COMPLETED,
+  // IN_PROGRESS, CANCELLED and UNABLE_TO_VERIFY are shared with promises and
+  // are defined once, below.
+  PROPOSED: "प्रस्तावित",
+  STALLED: "अवरुद्ध",
+
+  // elected posts, as the Election Commission prints them
+  MAYOR: "मेयर",
+  DEPUTY_MAYOR: "उपमेयर",
+  CHAIRPERSON: "अध्यक्ष",
+  VICE_CHAIRPERSON: "उपाध्यक्ष",
+  WARD_CHAIRPERSON: "वडा अध्यक्ष",
+  WARD_MEMBER: "वडा सदस्य",
+  WOMAN_MEMBER: "महिला सदस्य",
+  DALIT_WOMAN_MEMBER: "दलित महिला सदस्य",
+  DCC_CHIEF: "जिल्ला समन्वय समिति प्रमुख",
+  DCC_DEPUTY_CHIEF: "जिल्ला समन्वय समिति उपप्रमुख",
+  HOUSE_OF_REPRESENTATIVES: "प्रतिनिधि सभा",
+  PROVINCIAL_ASSEMBLY: "प्रदेश सभा",
+
+  // statement context
+  PARLIAMENT: "संसद",
+  PRESS_CONFERENCE: "पत्रकार सम्मेलन",
+  INTERVIEW: "अन्तर्वार्ता",
+  SOCIAL_MEDIA: "सामाजिक सञ्जाल",
+  CAMPAIGN_RALLY: "चुनावी सभा",
+  PARTY_EVENT: "दलीय कार्यक्रम",
+  OFFICIAL_DOCUMENT: "आधिकारिक कागजात",
+
+  // media kind
+  PROJECT_EVIDENCE: "आयोजना प्रमाण",
+  CONSTITUENCY_VISIT: "क्षेत्र भ्रमण",
+  PUBLIC_EVENT: "सार्वजनिक कार्यक्रम",
+  DOCUMENT_SCAN: "कागजात",
+  OTHER: "अन्य",
 
   // promises
   NOT_STARTED: "सुरु नभएको",

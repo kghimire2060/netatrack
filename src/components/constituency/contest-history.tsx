@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui";
 import { VerifiedBadge } from "@/components/dashboard/trust";
 import { NotRecorded } from "@/components/candidate/unavailable";
 import type { Contest } from "@/lib/constituencies";
-import { formatCount, formatPct, type Locale, type Translator } from "@/lib/i18n";
+import { formatCount, formatYear, formatPct, type Locale, type Translator } from "@/lib/i18n";
 
 /**
  * One block per election: the full field, ranked, with the margin stated once
@@ -34,7 +34,7 @@ export function ContestHistory({
               {c.bsYear ? (
                 <span className="faint small">
                   {" "}
-                  · {t("cand.bs")} {formatCount(c.bsYear, locale)}
+                  · {t("cand.bs")} {formatYear(c.bsYear, locale)}
                 </span>
               ) : null}
             </div>

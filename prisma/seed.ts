@@ -138,6 +138,9 @@ async function main() {
   type CandidateSeed = {
     slug: string;
     fullName: string;
+    /** Devanagari name as published, so the Nepali UI is not a transliteration. */
+    fullNameNe: string;
+    dateOfBirth: Date;
     partyId: string | null;
     constituencyId: string;
     education: string;
@@ -154,6 +157,8 @@ async function main() {
     {
       slug: "ram-prasad-sharma",
       fullName: "Ram Prasad Sharma",
+      fullNameNe: "राम प्रसाद शर्मा",
+      dateOfBirth: new Date("1971-04-18"),
       partyId: alliance.id,
       constituencyId: ktm1.id,
       education: "Master's in Public Administration, Tribhuvan University",
@@ -168,6 +173,8 @@ async function main() {
     {
       slug: "sita-adhikari",
       fullName: "Sita Adhikari",
+      fullNameNe: "सीता अधिकारी",
+      dateOfBirth: new Date("1985-09-02"),
       partyId: unity.id,
       constituencyId: ktm1.id,
       education: "Bachelor's in Law, Nepal Law Campus",
@@ -180,6 +187,8 @@ async function main() {
     {
       slug: "hari-bahadur-magar",
       fullName: "Hari Bahadur Magar",
+      fullNameNe: "हरि बहादुर मगर",
+      dateOfBirth: new Date("1978-01-27"),
       partyId: civic.id,
       constituencyId: ktm1.id,
       education: "Master's in Economics",
@@ -192,6 +201,8 @@ async function main() {
     {
       slug: "maya-tamang",
       fullName: "Maya Tamang",
+      fullNameNe: "माया तामाङ",
+      dateOfBirth: new Date("1980-06-11"),
       partyId: alliance.id,
       constituencyId: ktm2.id,
       education: "Bachelor's in Environmental Science",
@@ -205,6 +216,8 @@ async function main() {
     {
       slug: "nirmal-thapa",
       fullName: "Nirmal Thapa",
+      fullNameNe: "निर्मल थापा",
+      dateOfBirth: new Date("1975-12-05"),
       partyId: unity.id,
       constituencyId: pok1.id,
       education: "Master's in Tourism Management",
@@ -217,6 +230,8 @@ async function main() {
     {
       slug: "sunita-chaudhary",
       fullName: "Sunita Chaudhary",
+      fullNameNe: "सुनिता चौधरी",
+      dateOfBirth: new Date("1988-03-21"),
       partyId: civic.id,
       constituencyId: mor3.id,
       education: "Bachelor's in Agriculture",
@@ -234,6 +249,8 @@ async function main() {
       where: { slug: seed.slug },
       update: {
         fullName: seed.fullName,
+        fullNameNe: seed.fullNameNe,
+        dateOfBirth: seed.dateOfBirth,
         education: seed.education,
         experience: seed.experience,
         previousPositions: seed.previousPositions,
@@ -249,6 +266,8 @@ async function main() {
       create: {
         slug: seed.slug,
         fullName: seed.fullName,
+        fullNameNe: seed.fullNameNe,
+        dateOfBirth: seed.dateOfBirth,
         biography: `${seed.fullName} is standing in this constituency. This biography is demo data.`,
         education: seed.education,
         experience: seed.experience,
@@ -499,6 +518,381 @@ async function main() {
   });
   console.log("  accountability records created");
 
+
+  // ------------------------------------------- local election, per ECN shape
+  //
+  // Modelled on result.election.gov.np: a local body runs several races on one
+  // day — a mayoral race and a separate race in every ward — and the Election
+  // Commission reports each under its own पद (post). This seed deliberately
+  // puts two DIFFERENT races in the SAME local body so the rank and margin
+  // arithmetic is exercised: without post and ward in the contest key, a ward
+  // member would be ranked against the mayoral candidates.
+  const localElection = await prisma.election.upsert({
+    where: { slug: "local-2079" },
+    update: {},
+    create: {
+      slug: "local-2079",
+      name: "Local Level Election 2079",
+      type: "LOCAL",
+      level: "LOCAL",
+      year: 2022,
+      bsYear: 2079,
+      status: "COMPLETED",
+      electionDate: new Date("2022-05-13"),
+      description:
+        "Demo record shaped after the Election Commission's 2079 local level results. Figures are illustrative, not official.",
+      sourceName: "Election Commission Nepal — Local Level Election 2079",
+      sourceUrl: "https://result.election.gov.np/LocalElectionResult2079.aspx",
+      sourceType: "ELECTION_COMMISSION",
+      verification: "VERIFIED",
+      tier: "OFFICIAL",
+      verifiedAt: new Date(),
+    },
+    select: { id: true },
+  });
+
+  const localBody = await prisma.constituency.upsert({
+    where: { slug: "kathmandu-metropolitan-city" },
+    update: {},
+    create: {
+      slug: "kathmandu-metropolitan-city",
+      name: "Kathmandu Metropolitan City",
+      nameNe: "काठमाडौं महानगरपालिका",
+      province: "Bagmati",
+      district: "Kathmandu",
+      level: "LOCAL",
+      localBodyType: "METROPOLITAN",
+      wards: 32,
+      sourceName: "Election Commission Nepal",
+      sourceUrl: "https://result.election.gov.np/LocalElectionResult2079.aspx",
+      sourceType: "ELECTION_COMMISSION",
+      tier: "OFFICIAL",
+    },
+    select: { id: true },
+  });
+
+  // Two races in one body. The mayoral field is much larger than the ward
+  // field, which is precisely what would corrupt a ward candidate's rank if
+  // the two were pooled.
+  const localRaces = [
+    { post: "MAYOR" as const, ward: null as number | null, rows: [
+      { slug: "ram-prasad-sharma", votes: 61_767, age: 55, symbol: "Sun", remark: "निर्वाचित" },
+      { slug: "sita-adhikari",     votes: 38_890, age: 41, symbol: "Tree", remark: null },
+      { slug: "hari-bahadur-magar", votes: 23_546, age: 48, symbol: "Bell", remark: null },
+    ]},
+    { post: "WARD_CHAIRPERSON" as const, ward: 5, rows: [
+      { slug: "maya-tamang",       votes: 1_842, age: 46, symbol: "Plough", remark: "निर्वाचित" },
+      { slug: "nirmal-thapa",      votes: 1_611, age: 51, symbol: "Umbrella", remark: null },
+    ]},
+  ];
+
+  for (const race of localRaces) {
+    for (const row of race.rows) {
+      const candidateId = candidates[row.slug].id;
+      await prisma.candidacy.upsert({
+        where: {
+          electionId_candidateId_constituencyId: {
+            electionId: localElection.id, candidateId, constituencyId: localBody.id,
+          },
+        },
+        update: { post: race.post, wardNumber: race.ward, ageAtElection: row.age },
+        create: {
+          electionId: localElection.id,
+          candidateId,
+          constituencyId: localBody.id,
+          post: race.post,
+          wardNumber: race.ward,
+          ageAtElection: row.age,
+          symbol: row.symbol,
+          nominationStatus: "ACCEPTED",
+        },
+      });
+
+      const totalVotes = race.rows.reduce((sum, r) => sum + r.votes, 0);
+      await prisma.result.upsert({
+        where: {
+          electionId_constituencyId_candidateId: {
+            electionId: localElection.id, constituencyId: localBody.id, candidateId,
+          },
+        },
+        update: { post: race.post, wardNumber: race.ward, remark: row.remark },
+        create: {
+          electionId: localElection.id,
+          constituencyId: localBody.id,
+          candidateId,
+          votes: row.votes,
+          voteShare: Number(((row.votes / totalVotes) * 100).toFixed(2)),
+          isWinner: row.remark === "निर्वाचित",
+          post: race.post,
+          wardNumber: race.ward,
+          remark: row.remark,
+          totalVotesCast: totalVotes,
+          status: "VERIFIED",
+          tier: "OFFICIAL",
+          sourceName: "Election Commission Nepal — Local Level Election 2079",
+          sourceUrl: "https://result.election.gov.np/LocalElectionResult2079.aspx",
+          sourceType: "ELECTION_COMMISSION",
+          publishedAt: new Date("2022-05-20"),
+        },
+      });
+    }
+  }
+  console.log("  local election (ECN shape) created");
+
+  // -------------------------------------------- constituency projects + media
+  //
+  // Deliberately mixed: one completed with a published progress figure, one
+  // in progress, one stalled, and one with no published progress at all. A
+  // seed where every project is clean would hide exactly the states the
+  // delivery tracker exists to show.
+  const projectPlan = [
+    {
+      slug: "ward-5-8-link-road-upgrade",
+      title: "Ward 5–Ward 8 link road upgrade",
+      titleNe: "वडा ५–वडा ८ जोड्ने सडक स्तरोन्नति",
+      sector: "Infrastructure",
+      status: "COMPLETED" as const,
+      progressPct: 100,
+      budgetNpr: 42_500_000,
+      spentNpr: 41_180_000,
+      startedAt: new Date("2023-02-14"),
+      targetDate: new Date("2024-11-30"),
+      completedAt: new Date("2024-10-22"),
+      wardNumber: 5,
+      implementingBody: "Department of Roads, Division Office Kathmandu",
+      promiseTitle: "Upgrade the Ward 5–Ward 8 link road",
+    },
+    {
+      slug: "ward-5-public-hospital",
+      title: "Ward 5 public hospital construction",
+      titleNe: "वडा ५ सार्वजनिक अस्पताल निर्माण",
+      sector: "Health",
+      status: "IN_PROGRESS" as const,
+      progressPct: 46.5,
+      budgetNpr: 380_000_000,
+      spentNpr: 171_400_000,
+      startedAt: new Date("2024-05-02"),
+      targetDate: new Date("2027-06-30"),
+      completedAt: null,
+      wardNumber: 5,
+      implementingBody: "Ministry of Health and Population",
+      promiseTitle: "Build a new public hospital in Ward 5",
+    },
+    {
+      // Funded, started, then halted. Scores below a delayed promise because
+      // money was released against work that stopped.
+      slug: "riverside-drainage-phase-2",
+      title: "Riverside drainage improvement, phase 2",
+      titleNe: "नदी किनार ढल सुधार, दोस्रो चरण",
+      sector: "Sanitation",
+      status: "STALLED" as const,
+      progressPct: 22,
+      budgetNpr: 95_000_000,
+      spentNpr: 28_600_000,
+      startedAt: new Date("2023-08-10"),
+      targetDate: new Date("2025-03-31"),
+      completedAt: null,
+      wardNumber: 8,
+      implementingBody: "Kathmandu Metropolitan City",
+      promiseTitle: null,
+    },
+    {
+      // No published progress figure, on purpose: the UI must say so rather
+      // than infer a percentage from the status.
+      slug: "ward-9-school-rebuild",
+      title: "Ward 9 school building reconstruction",
+      titleNe: "वडा ९ विद्यालय भवन पुनर्निर्माण",
+      sector: "Education",
+      status: "APPROVED" as const,
+      progressPct: null,
+      budgetNpr: 64_000_000,
+      spentNpr: null,
+      startedAt: null,
+      targetDate: new Date("2026-12-31"),
+      completedAt: null,
+      wardNumber: 9,
+      implementingBody: "National Reconstruction Authority",
+      promiseTitle: "Rebuild two school buildings",
+    },
+  ];
+
+  const projects: Record<string, { id: string }> = {};
+  for (const plan of projectPlan) {
+    const promise = plan.promiseTitle
+      ? await prisma.promise.findFirst({ where: { title: plan.promiseTitle }, select: { id: true } })
+      : null;
+
+    projects[plan.slug] = await prisma.project.upsert({
+      where: { slug: plan.slug },
+      update: {},
+      create: {
+        slug: plan.slug,
+        title: plan.title,
+        titleNe: plan.titleNe,
+        description: `Recorded from published budget and implementing-agency documents. ${plan.title}.`,
+        sector: plan.sector,
+        status: plan.status,
+        progressPct: plan.progressPct,
+        budgetNpr: plan.budgetNpr,
+        spentNpr: plan.spentNpr,
+        startedAt: plan.startedAt,
+        targetDate: plan.targetDate,
+        completedAt: plan.completedAt,
+        wardNumber: plan.wardNumber,
+        implementingBody: plan.implementingBody,
+        constituencyId: ktm1.id,
+        candidateId: candidates["ram-prasad-sharma"].id,
+        promiseId: promise?.id ?? null,
+        sourceName: "Municipal budget book and progress report (demo)",
+        sourceUrl: "https://example.org/project-progress",
+        sourceType: "GOVERNMENT",
+        tier: "NETATRACK",
+        lastUpdateAt: new Date(),
+      },
+      select: { id: true },
+    });
+
+    const hasUpdate = await prisma.projectUpdate.findFirst({
+      where: { projectId: projects[plan.slug].id },
+      select: { id: true },
+    });
+    if (!hasUpdate) {
+      await prisma.projectUpdate.create({
+        data: {
+          projectId: projects[plan.slug].id,
+          status: plan.status,
+          progressPct: plan.progressPct,
+          note: "Initial status recorded from the published source.",
+          evidenceUrl: "https://example.org/project-progress",
+          actorId: staffEditor.id,
+        },
+      });
+    }
+  }
+
+  const mediaPlan = [
+    {
+      projectSlug: "ward-5-8-link-road-upgrade",
+      kind: "PROJECT_EVIDENCE" as const,
+      caption: "Completed blacktopping on the Ward 5–Ward 8 link road.",
+      captionNe: "वडा ५–वडा ८ सडकमा सम्पन्न कालोपत्रे।",
+      altText: "A two-lane sealed road running between houses, with a new kerb along one side.",
+      capturedAt: new Date("2024-10-25"),
+    },
+    {
+      projectSlug: "ward-5-public-hospital",
+      kind: "PROJECT_EVIDENCE" as const,
+      caption: "Structural frame of the Ward 5 hospital at the halfway inspection.",
+      captionNe: "वडा ५ अस्पतालको संरचना, आधा प्रगति निरीक्षणका बेला।",
+      altText: "A partly built multi-storey concrete frame surrounded by scaffolding.",
+      capturedAt: new Date("2025-11-14"),
+    },
+    {
+      projectSlug: "riverside-drainage-phase-2",
+      kind: "PROJECT_EVIDENCE" as const,
+      caption: "Drainage trench left open since work halted in 2025.",
+      captionNe: "२०२५ मा काम रोकिएपछि खुला रहेको ढल खाडल।",
+      altText: "An unfinished open concrete drainage trench beside a dirt road.",
+      capturedAt: new Date("2026-02-08"),
+    },
+    {
+      projectSlug: null,
+      kind: "CONSTITUENCY_VISIT" as const,
+      caption: "Ward-level consultation on the municipal budget.",
+      captionNe: "नगर बजेटबारे वडास्तरीय छलफल।",
+      altText: "A public meeting in a hall, with a speaker addressing seated residents.",
+      // Left undated on purpose: the gallery must render an undated photo
+      // without inventing a date from the upload timestamp.
+      capturedAt: null,
+    },
+  ];
+
+  for (const [index, plan] of mediaPlan.entries()) {
+    const existing = await prisma.mediaItem.findFirst({
+      where: { candidateId: candidates["ram-prasad-sharma"].id, caption: plan.caption },
+      select: { id: true },
+    });
+    if (existing) continue;
+    await prisma.mediaItem.create({
+      data: {
+        candidateId: candidates["ram-prasad-sharma"].id,
+        projectId: plan.projectSlug ? projects[plan.projectSlug].id : null,
+        kind: plan.kind,
+        imageUrl: `https://placehold.co/800x600/1D5FA7/ffffff?text=Evidence+${index + 1}`,
+        caption: plan.caption,
+        captionNe: plan.captionNe,
+        altText: plan.altText,
+        capturedAt: plan.capturedAt,
+        credit: "NetaTrack field record (demo)",
+        sourceUrl: "https://example.org/project-progress",
+        tier: "NETATRACK",
+        status: "PUBLISHED",
+        position: index,
+      },
+    });
+  }
+  console.log("  projects and evidence created");
+
+  // ------------------------------------------------------------- statements
+  //
+  // One checked, one not. A seed where every quote carries a verdict would
+  // imply the platform adjudicates everything it records, which it does not.
+  const factCheckForStatement = await prisma.factCheck.findFirst({
+    where: { candidateId: candidates["ram-prasad-sharma"].id },
+    select: { id: true },
+  });
+
+  const statementPlan = [
+    {
+      quote:
+        "The Ward 5 to Ward 8 link road was completed four months ahead of the published target date, and under the allocated budget.",
+      quoteNe:
+        "वडा ५ देखि वडा ८ जोड्ने सडक प्रकाशित लक्ष्य मितिभन्दा चार महिना अगावै र विनियोजित बजेटभित्रै सम्पन्न भयो।",
+      context: "PRESS_CONFERENCE" as const,
+      venue: "Kathmandu Metropolitan City press briefing",
+      statedAt: new Date("2024-11-04"),
+      topic: "Infrastructure",
+      withCheck: true,
+    },
+    {
+      quote:
+        "Construction of the Ward 5 public hospital will be finished within the current fiscal year, and the drainage work will restart before the monsoon.",
+      quoteNe:
+        "वडा ५ सार्वजनिक अस्पतालको निर्माण चालु आर्थिक वर्षभित्रै सकिनेछ र ढल निर्माण वर्षा अघि पुनः सुरु हुनेछ।",
+      context: "PARLIAMENT" as const,
+      venue: "House of Representatives, budget session",
+      statedAt: new Date("2026-06-19"),
+      topic: "Health",
+      withCheck: false,
+    },
+  ];
+
+  for (const plan of statementPlan) {
+    const existing = await prisma.statement.findFirst({
+      where: { candidateId: candidates["ram-prasad-sharma"].id, quote: plan.quote },
+      select: { id: true },
+    });
+    if (existing) continue;
+    await prisma.statement.create({
+      data: {
+        candidateId: candidates["ram-prasad-sharma"].id,
+        quote: plan.quote,
+        quoteNe: plan.quoteNe,
+        context: plan.context,
+        venue: plan.venue,
+        statedAt: plan.statedAt,
+        topic: plan.topic,
+        sourceName: "Published transcript (demo)",
+        sourceUrl: "https://example.org/statement-transcript",
+        sourceType: "NEWS_MEDIA",
+        tier: "NETATRACK",
+        status: "PUBLISHED",
+        factCheckId: plan.withCheck ? (factCheckForStatement?.id ?? null) : null,
+      },
+    });
+  }
+  console.log("  statements created");
+
   // ------------------------------------------------------ news and fact check
   const article = await prisma.newsArticle.upsert({
     where: { slug: "constituency-budget-transparency-review" },
@@ -610,6 +1004,7 @@ This fact check is demonstration content included with the NetaTrack seed datase
         district: "Kathmandu",
         locationDetail: "Main road junction opposite the Ward 4 community centre",
         constituencyId: ktm1.id,
+        representativeId: candidates["ram-prasad-sharma"].id,
         reporterId: citizen.id,
         assignedToId: staffOps.id,
         verifiedById: staffOps.id,
@@ -646,6 +1041,7 @@ This fact check is demonstration content included with the NetaTrack seed datase
         province: "Bagmati",
         district: "Kathmandu",
         constituencyId: ktm2.id,
+        representativeId: candidates["maya-tamang"].id,
         reporterId: citizenTwo.id,
         assignedToId: staffOps.id,
         verifiedById: staffOps.id,
